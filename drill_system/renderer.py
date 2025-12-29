@@ -673,7 +673,11 @@ def render(
     action_renderer = ActionRenderer(ax, goal_y)
     
     for action in drill.actions:
-        if isinstance(action, PassAction):
+        # Use action.type string instead of isinstance() for reliable type checking
+        # This works better with Pydantic discriminated unions
+        action_type = getattr(action, 'type', None)
+        
+        if action_type == "PASS":
             from_x, from_y = tracker.get_player_position(action.from_player)
             to_x, to_y = tracker.get_player_position(action.to_player)
             
@@ -685,7 +689,7 @@ def render(
             
             tracker.transfer_ball(action.to_player)
         
-        elif isinstance(action, RunAction):
+        elif action_type == "RUN":
             start_x, start_y = tracker.get_player_position(action.player)
             end_x, end_y = action.to_position.x, action.to_position.y
             
@@ -695,7 +699,7 @@ def render(
             
             tracker.update_player_position(action.player, end_x, end_y)
         
-        elif isinstance(action, DribbleAction):
+        elif action_type == "DRIBBLE":
             start_x, start_y = tracker.get_player_position(action.player)
             end_x, end_y = action.to_position.x, action.to_position.y
             
@@ -705,7 +709,7 @@ def render(
             
             tracker.update_player_position(action.player, end_x, end_y)
         
-        elif isinstance(action, ShotAction):
+        elif action_type == "SHOT":
             start_x, start_y = tracker.get_player_position(action.player)
             
             start_is_player = tracker.is_at_starting_position(action.player)
