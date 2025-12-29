@@ -172,8 +172,14 @@ class ShotAction(BaseModel):
         return v.upper()
 
 
-# Union type for all actions
-Action = Union[PassAction, RunAction, DribbleAction, ShotAction]
+# Union type for all actions - use 'type' field as discriminator
+from typing import Annotated
+from pydantic import Field as PydanticField
+
+Action = Annotated[
+    Union[PassAction, RunAction, DribbleAction, ShotAction],
+    PydanticField(discriminator='type')
+]
 
 
 # ============================================================
