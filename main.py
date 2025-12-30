@@ -244,7 +244,7 @@ DRILL_TOOL = {
             },
             "coach_description": {
                 "type": "string",
-                "description": "COMPREHENSIVE markdown coaching document (1000+ words) that coaches can use directly on the field. Must include: Overview with duration/intensity/focus, detailed Setup with field configuration and starting positions explained in natural language, step-by-step 'How to Run the Drill' section matching the actions array exactly, 5+ detailed Coaching Points with technique explanations, Progressions table with 3-4 levels, Common Mistakes table with observable behaviors and corrections, and practical Coaching Tips. Write in a warm professional coaching voice, not bullet points. This should read like a document from a professional academy."
+                "description": "COMPREHENSIVE markdown coaching document (1000+ words) that a coach can use to run the drill WITHOUT the diagram. MUST include: Overview, detailed Setup (field configuration with specific dimensions, ALL player starting positions with exact locations, ALL equipment with placement), 'How to Run the Drill' section with NUMBERED STEPS matching EACH action in the actions array (if 5 actions, 5 numbered steps), Reset & Rotation instructions, 5+ Coaching Points, Progressions table, Common Mistakes table. The step-by-step instructions are CRITICAL - each step must name the player ID and describe exactly what they do (e.g., 'A1 passes to A2 at the top of the box')."
             }
         },
         "required": ["drill", "coach_description"]
@@ -254,6 +254,18 @@ DRILL_TOOL = {
 SYSTEM_PROMPT = """You are an expert soccer coach and drill designer with decades of experience at professional academies. When asked to create a drill, you MUST use the create_drill tool to return a structured response.
 
 Your drills should be practical, well-organized, and match what a real coach would design. The diagram and description must match perfectly.
+
+## RESOURCE USAGE (IMPORTANT)
+
+The coach will specify AVAILABLE resources (players, goals, cones, etc.). These are MAXIMUM limits, not requirements:
+- You do NOT need to use all available players - use what makes sense for the drill
+- Many drills work better with fewer active players and a queue/line (e.g., 3-4 active, rest waiting)
+- However, you CANNOT use resources that aren't available
+- If goals = 0, do NOT include any goals or SHOT actions
+- If cones are not available, do NOT include cones
+- If mannequins are not available, do NOT include mannequins
+
+Design the BEST drill for the training goal, not the drill that uses the most resources.
 
 ## COORDINATE SYSTEM (CRITICAL - READ CAREFULLY)
 
@@ -546,7 +558,7 @@ Place at the starting player's position:
 
 ## COACH DESCRIPTION FORMAT (CRITICAL - FOLLOW EXACTLY)
 
-The coach_description field must be a comprehensive, professional coaching document written in natural coaching language. This is what coaches will read and use on the field.
+The coach_description field must be a comprehensive, professional coaching document that a coach can use to run the drill WITHOUT looking at the diagram. This is essential - the description must be complete and standalone.
 
 Write in a warm, professional tone as if you're an experienced coach explaining to another coach. Be specific, practical, and actionable.
 
@@ -568,33 +580,40 @@ Write in a warm, professional tone as if you're an experienced coach explaining 
 ## Setup
 
 ### Field Configuration
-[Describe the field setup in natural sentences - field size, where goals are, any zones marked out]
+[Describe the field setup completely - field size (half/full), where goals are positioned, any zones or areas marked with cones. A coach reading this should be able to set up the field without the diagram.]
 
 ### Starting Positions
-Describe where each player starts in natural language:
-- **[Player ID]** starts [location description with context]
-- Continue for all players...
+Describe where EVERY player starts with specific locations:
+- **[Player ID]** starts [specific location - e.g., "on the left side of the field, 10 yards outside the 18-yard box"]
+- **[Player ID]** starts [specific location]
+- Continue for ALL players in the drill...
 
 ### Equipment Needed
-- [X] balls
-- [X] cones (describe placement)
+- [X] balls (specify where they're placed)
+- [X] cones (describe exactly where each cone goes)
+- [X] goals (specify full-size, mini-goals, etc.)
 - [Any other equipment]
-- Bibs to distinguish teams
+- Bibs: [specify colors for different roles]
 
 ---
 
-## How to Run the Drill
+## How to Run the Drill (CRITICAL SECTION)
 
-### Sequence of Play
-Walk through the drill step by step, exactly matching the actions in the diagram:
+### Step-by-Step Instructions
+THIS SECTION MUST MATCH THE ACTIONS IN THE DIAGRAM EXACTLY. Walk through every single action:
 
-1. **The drill begins with [Player] [action]** — [Explain WHY and WHAT to look for]
-2. **[Player] then [action]** — [Coaching context and timing cues]
-3. **[Continue for each action...]**
-4. **The sequence ends when [final action]**
+1. **[Player ID] [specific action with detail]** — [Player] starts with the ball and [passes to/dribbles toward/runs to] [destination/target player]. [Add coaching context: what to look for, timing cues, technique focus]
 
-### Reset
-[Explain how players reset to starting positions and how quickly the drill should flow]
+2. **[Player ID] [specific action with detail]** — After receiving, [Player] [next action]. [Coaching context]
+
+3. **[Continue numbering EVERY action in the diagram...]**
+
+4. **The drill ends when [final action - usually a shot or final pass]**
+
+IMPORTANT: Each numbered step must correspond to one action arrow in the diagram. If there are 5 action arrows, there should be 5 numbered steps. Use player IDs (A1, A2, D1, GK, etc.) consistently.
+
+### Reset & Rotation
+[Explain exactly how players reset to starting positions, who rotates where, and how quickly the drill should restart. Include rest periods if applicable.]
 
 ---
 
@@ -683,19 +702,23 @@ Use half a field with a full-size goal. The drill takes place in and around the 
 
 ## How to Run the Drill
 
-### Sequence of Play
-Walk through the drill step by step:
+### Step-by-Step Instructions
 
-1. **A1 starts by dribbling toward the defender** — The ball carrier must drive at D1 with purpose. Look for A1 to attack the defender's front foot, forcing them to commit.
+1. **A1 dribbles toward D1** — A1 starts with the ball at their feet and drives directly at the defender. The goal is to force D1 to commit - A1 should attack D1's front shoulder at pace, not slowly approach. Look for A1 keeping the ball on their back foot, ready to release the pass.
 
-2. **A2 makes a curved run into space** — As A1 engages the defender, A2 should arc their run to stay onside while finding the pocket of space. The timing is crucial - too early and D1 can recover, too late and the chance is gone.
+2. **A2 makes a curved run behind D1** — As A1 engages the defender, A2 times their run to arc around and behind D1 into the space between the defender and goal. A2 should start the run when A1 is about 5 yards from D1. The run should curve from central to wide-to-central, staying onside.
 
-3. **A1 releases the pass to A2** — The pass should be played into A2's path, weighted so they can take a touch toward goal or finish first-time. A1 must wait until D1 commits before releasing.
+3. **A1 passes to A2** — Once D1 commits (shows their hips toward A1), A1 plays a firm pass into A2's path. The pass should lead A2 toward goal, not to their feet. Use the inside of the foot for accuracy.
 
-4. **A2 finishes on goal** — A2 should aim for the far corner, striking across the goalkeeper. Emphasize composure - placement over power.
+4. **A2 shoots on goal** — A2 takes a touch to set the ball, then finishes into the far corner. Emphasize composure - A2 should pick their spot before shooting, aiming low and across the goalkeeper.
 
-### Reset
-After each rep, A1 and A2 jog back to starting positions while the next pair prepares. Keep rest to 30-45 seconds to maintain intensity. Rotate the defender every 4-5 reps to keep them fresh.
+### Reset & Rotation
+After each rep:
+- A1 and A2 jog back to their starting positions
+- The next pair (if using multiple groups) steps up immediately
+- Keep rest to 30-45 seconds maximum to maintain intensity
+- Rotate D1 every 4-5 reps to prevent fatigue
+- Balls should be staged behind A1's starting position for quick restarts
 
 ---
 
@@ -747,6 +770,8 @@ Focus on these key teaching points:
 
 IMPORTANT: Your coach_description must be this detailed and professional. Do not write short, generic descriptions. Coaches need specific, actionable guidance they can use immediately on the field.
 
+CRITICAL REQUIREMENT: The "How to Run the Drill" section must have one numbered step for EACH action in your actions array. If you have 6 actions (e.g., dribble, pass, run, pass, dribble, shot), you must have 6 numbered steps explaining each one. A coach should be able to run this drill using ONLY the text description, without ever seeing the diagram.
+
 ---
 
 ## FINAL CHECKLIST BEFORE RESPONDING
@@ -782,27 +807,40 @@ def call_claude_api(request: DrillRequest) -> dict:
     
     prompt_parts.append(f"based on this request: {request.prompt}")
     
+    # IMPORTANT: Resources are AVAILABLE, not required
+    prompt_parts.append(f"\n\n## AVAILABLE RESOURCES (Maximum - use what makes sense for the drill)")
+    prompt_parts.append(f"\nIMPORTANT: These are the MAXIMUM resources available. You do NOT need to use all of them.")
+    prompt_parts.append(f"Design the best drill for the training goal - some drills work better with fewer players (e.g., lines/queues).")
+    prompt_parts.append(f"However, you CANNOT use resources that aren't available (e.g., no goals if goals=0).")
+    
     # Player configuration
-    prompt_parts.append(f"\n\nPlayer Configuration:")
-    prompt_parts.append(f"- Total players: {request.num_players}")
+    prompt_parts.append(f"\n\nPlayers Available:")
+    prompt_parts.append(f"- Up to {request.num_players} players available (use fewer if appropriate for the drill)")
     
     if request.num_goalkeepers > 0:
-        prompt_parts.append(f"- Goalkeepers: {request.num_goalkeepers}")
+        prompt_parts.append(f"- Goalkeepers available: {request.num_goalkeepers}")
     elif request.include_goalkeeper:
-        prompt_parts.append(f"- Include 1 goalkeeper")
+        prompt_parts.append(f"- 1 goalkeeper available if needed")
     
     # Equipment
-    prompt_parts.append(f"\n\nEquipment:")
-    prompt_parts.append(f"- Goals: {request.num_goals}")
+    prompt_parts.append(f"\n\nEquipment Available:")
+    if request.num_goals > 0:
+        prompt_parts.append(f"- Goals: {request.num_goals} (MUST use at least 1 if this is a finishing drill)")
+    else:
+        prompt_parts.append(f"- Goals: NONE AVAILABLE - do NOT include any goals or shots on goal")
     
     if request.has_cones:
-        prompt_parts.append(f"- Cones/markers: Available")
+        prompt_parts.append(f"- Cones/markers: Available (use as needed)")
+    else:
+        prompt_parts.append(f"- Cones/markers: NOT available")
     
     if request.has_mannequins:
-        prompt_parts.append(f"- Mannequins/dummies: Available - USE THEM in the drill")
+        prompt_parts.append(f"- Mannequins/dummies: Available - consider using them for passive defenders")
+    else:
+        prompt_parts.append(f"- Mannequins/dummies: NOT available")
     
     if request.num_balls:
-        prompt_parts.append(f"- Balls: {request.num_balls}")
+        prompt_parts.append(f"- Balls: {request.num_balls} available")
     
     # Field setup
     prompt_parts.append(f"\n\nField Setup:")

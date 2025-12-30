@@ -564,7 +564,9 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
     Returns unit vector (dx, dy) or None if no relevant action found.
     """
     for action in drill.actions:
-        if isinstance(action, PassAction) and action.from_player == ball_holder:
+        action_type = getattr(action, 'type', None)
+        
+        if action_type == "PASS" and action.from_player == ball_holder:
             # Direction toward the receiver
             holder_pos = next(p for p in drill.players if p.id == ball_holder).position
             receiver_pos = next(p for p in drill.players if p.id == action.to_player).position
@@ -573,7 +575,7 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
             dist = np.sqrt(dx**2 + dy**2)
             if dist > 0:
                 return (dx / dist, dy / dist)
-        elif isinstance(action, DribbleAction) and action.player == ball_holder:
+        elif action_type == "DRIBBLE" and action.player == ball_holder:
             # Direction toward dribble destination
             holder_pos = next(p for p in drill.players if p.id == ball_holder).position
             dx = action.to_position.x - holder_pos.x
@@ -581,7 +583,7 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
             dist = np.sqrt(dx**2 + dy**2)
             if dist > 0:
                 return (dx / dist, dy / dist)
-        elif isinstance(action, ShotAction) and action.player == ball_holder:
+        elif action_type == "SHOT" and action.player == ball_holder:
             # Direction toward goal
             holder_pos = next(p for p in drill.players if p.id == ball_holder).position
             goal_y = 100 if drill.field.attacking_direction == AttackingDirection.NORTH else 0
@@ -597,7 +599,7 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
 # MAIN RENDER FUNCTION
 # ============================================================
 
-BALL_OFFSET = 1.2  # How far to offset ball from player center
+BALL_OFFSET = 2.5  # How far to offset ball from player center (increased for visibility)
 
 def render(
     drill: Drill,
