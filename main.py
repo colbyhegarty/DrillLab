@@ -244,7 +244,7 @@ DRILL_TOOL = {
             },
             "coach_description": {
                 "type": "string",
-                "description": "Detailed markdown description for coaches including: Overview, Setup (field, starting positions, equipment), Sequence of Play (numbered steps), Coaching Points, and Variations"
+                "description": "COMPREHENSIVE markdown coaching document (1000+ words) that coaches can use directly on the field. Must include: Overview with duration/intensity/focus, detailed Setup with field configuration and starting positions explained in natural language, step-by-step 'How to Run the Drill' section matching the actions array exactly, 5+ detailed Coaching Points with technique explanations, Progressions table with 3-4 levels, Common Mistakes table with observable behaviors and corrections, and practical Coaching Tips. Write in a warm professional coaching voice, not bullet points. This should read like a document from a professional academy."
             }
         },
         "required": ["drill", "coach_description"]
@@ -544,15 +544,19 @@ Place at the starting player's position:
 
 ---
 
-## COACH DESCRIPTION FORMAT
+## COACH DESCRIPTION FORMAT (CRITICAL - FOLLOW EXACTLY)
 
-Write a detailed, professional coaching document in markdown:
+The coach_description field must be a comprehensive, professional coaching document written in natural coaching language. This is what coaches will read and use on the field.
+
+Write in a warm, professional tone as if you're an experienced coach explaining to another coach. Be specific, practical, and actionable.
+
+### REQUIRED STRUCTURE:
 
 ```markdown
 # [Drill Name]
 
 ## Overview
-[2-3 sentences describing the drill purpose, what it develops, intensity level]
+[2-3 sentences describing the drill purpose, what it develops, and why it's effective. Write naturally, not in bullet points.]
 
 **Players:** [X] (including [Y] goalkeeper(s))  
 **Duration:** [X-Y] minutes  
@@ -563,49 +567,185 @@ Write a detailed, professional coaching document in markdown:
 
 ## Setup
 
-### Field
-- [Field size and configuration]
-- [Goal setup]
+### Field Configuration
+[Describe the field setup in natural sentences - field size, where goals are, any zones marked out]
 
 ### Starting Positions
-- **[Player ID] ([Role]):** [Description of where they start]
-- [Continue for all players...]
+Describe where each player starts in natural language:
+- **[Player ID]** starts [location description with context]
+- Continue for all players...
 
-### Equipment
-- [List all equipment: cones, balls, mannequins, bibs, etc.]
+### Equipment Needed
+- [X] balls
+- [X] cones (describe placement)
+- [Any other equipment]
+- Bibs to distinguish teams
 
 ---
 
-## Sequence of Play
+## How to Run the Drill
 
-1. **[Action description]** — [Detailed explanation of what happens and why]
-2. **[Action description]** — [Detailed explanation]
-3. [Continue for all actions...]
+### Sequence of Play
+Walk through the drill step by step, exactly matching the actions in the diagram:
+
+1. **The drill begins with [Player] [action]** — [Explain WHY and WHAT to look for]
+2. **[Player] then [action]** — [Coaching context and timing cues]
+3. **[Continue for each action...]**
+4. **The sequence ends when [final action]**
+
+### Reset
+[Explain how players reset to starting positions and how quickly the drill should flow]
 
 ---
 
 ## Coaching Points
 
-- **[Point 1]:** [Detailed explanation]
-- **[Point 2]:** [Detailed explanation]
-- [Continue for 4-6 points...]
+Focus on these key teaching points during the drill:
+
+1. **[Technical Point]:** [Detailed explanation of the technique - what good execution looks like, common errors, and corrections]
+
+2. **[Tactical Point]:** [Explain the game understanding aspect - when/why players make certain decisions]
+
+3. **[Movement Point]:** [Timing, angles, body position details]
+
+4. **[Communication Point]:** [What players should be calling out]
+
+5. **[Intensity Point]:** [Expectations for effort, tempo, competitiveness]
 
 ---
 
-## Progressions & Variations
+## Progressions
 
-| Progression | Description |
-|-------------|-------------|
-| [Name] | [How to implement] |
-| [Name] | [How to implement] |
+Start simple and add complexity as players master each level:
+
+| Level | Progression | When to Advance |
+|-------|-------------|-----------------|
+| 1 | [Base drill as described] | When players complete 5 successful reps |
+| 2 | [First progression - add constraint or defender] | When success rate hits 70% |
+| 3 | [Second progression - increase difficulty] | When players are comfortable |
+| 4 | [Game-realistic version] | To finish the session |
 
 ---
 
-## Common Mistakes to Watch For
+## Common Mistakes & Corrections
 
-- [Mistake 1 and how to correct it]
-- [Mistake 2 and how to correct it]
+Watch for these issues and use these corrections:
+
+| Mistake | What You'll See | Correction |
+|---------|----------------|------------|
+| [Mistake 1] | [Observable behavior] | [Specific coaching intervention] |
+| [Mistake 2] | [Observable behavior] | [Specific coaching intervention] |
+| [Mistake 3] | [Observable behavior] | [Specific coaching intervention] |
+
+---
+
+## Coaching Tips
+
+- [Practical tip for running this drill effectively]
+- [How to keep energy high]
+- [What to watch for as the coach]
 ```
+
+### EXAMPLE OF GOOD COACH DESCRIPTION:
+
+Here's an example of the quality and detail expected:
+
+```markdown
+# 2v1 Finishing with Overlap
+
+## Overview
+This drill develops combination play and finishing in 2v1 situations. Players learn to commit defenders, time supporting runs, and finish under pressure. It's a high-tempo drill that simulates real game attacking scenarios in the final third.
+
+**Players:** 4 (including 1 goalkeeper)  
+**Duration:** 12-15 minutes  
+**Intensity:** High  
+**Focus:** Combination play, finishing, decision-making, movement off the ball
+
+---
+
+## Setup
+
+### Field Configuration
+Use half a field with a full-size goal. The drill takes place in and around the penalty area, giving players realistic distances and angles for finishing.
+
+### Starting Positions
+- **GK** starts on the goal line, ready to face shots from various angles
+- **A1** (attacker with ball) starts on the left side, about 10 yards outside the 18-yard box with the ball at their feet
+- **A2** (supporting attacker) starts centrally, level with A1, ready to make a run
+- **D1** (defender) starts between the attackers and goal, positioned to delay the attack
+
+### Equipment Needed
+- 6-8 balls (placed behind A1's starting position for quick restarts)
+- 4 cones to mark starting positions
+- Bibs: red for attackers, blue for defender
+
+---
+
+## How to Run the Drill
+
+### Sequence of Play
+Walk through the drill step by step:
+
+1. **A1 starts by dribbling toward the defender** — The ball carrier must drive at D1 with purpose. Look for A1 to attack the defender's front foot, forcing them to commit.
+
+2. **A2 makes a curved run into space** — As A1 engages the defender, A2 should arc their run to stay onside while finding the pocket of space. The timing is crucial - too early and D1 can recover, too late and the chance is gone.
+
+3. **A1 releases the pass to A2** — The pass should be played into A2's path, weighted so they can take a touch toward goal or finish first-time. A1 must wait until D1 commits before releasing.
+
+4. **A2 finishes on goal** — A2 should aim for the far corner, striking across the goalkeeper. Emphasize composure - placement over power.
+
+### Reset
+After each rep, A1 and A2 jog back to starting positions while the next pair prepares. Keep rest to 30-45 seconds to maintain intensity. Rotate the defender every 4-5 reps to keep them fresh.
+
+---
+
+## Coaching Points
+
+Focus on these key teaching points:
+
+1. **Commit the Defender:** A1 must drive at D1 with enough conviction to force a decision. If A1 is passive, D1 can cover both attacker and passing lane. Look for A1 attacking D1's front shoulder.
+
+2. **Timing of the Run:** A2's run is everything. Watch for players who run too early (offside or easily tracked) or too late (chance gone). The trigger is when A1 drops their shoulder to engage the defender.
+
+3. **Pass Weight:** The pass should arrive in A2's stride, not behind them or too far ahead. A1 should play the ball with the inside of the foot for accuracy, not power.
+
+4. **Finishing Composure:** Under pressure, players often snatch at shots. Remind A2 to take a breath, pick a corner, and stroke the ball. Accuracy beats power.
+
+5. **Body Shape on Finish:** A2 should open their body to see the goal before receiving. This allows a first-time finish or a clean touch into shooting position.
+
+---
+
+## Progressions
+
+| Level | Progression | When to Advance |
+|-------|-------------|-----------------|
+| 1 | Passive defender (50% pressure) | After 3-4 successful combinations |
+| 2 | Active defender at full speed | When attackers are timing runs well |
+| 3 | Add a second defender who starts deeper | When success rate is above 60% |
+| 4 | Require one-touch finish only | To increase urgency and tempo |
+
+---
+
+## Common Mistakes & Corrections
+
+| Mistake | What You'll See | Correction |
+|---------|----------------|------------|
+| Pass too early | A1 passes before D1 commits, defender intercepts | "Wait for the defender to show you their hips, then play" |
+| Run too flat | A2 runs straight, stays in D1's cover shadow | "Curve your run - start wide, finish central" |
+| Shooting high | A2 leans back, ball flies over bar | "Get over the ball, land on your shooting foot" |
+| Poor first touch | A2's touch goes under feet or too wide | "Touch into space toward the goal, not sideways" |
+
+---
+
+## Coaching Tips
+
+- Stand where you can see both the combination and the finish - usually near the corner of the 18-yard box
+- Give immediate feedback after each rep - one coaching point only
+- Celebrate good combinations even when the finish misses - reinforce the process
+- If energy drops, add competition: "Next goal wins" or "Attackers vs defenders - who gets more?"
+```
+
+IMPORTANT: Your coach_description must be this detailed and professional. Do not write short, generic descriptions. Coaches need specific, actionable guidance they can use immediately on the field.
 
 ---
 
@@ -730,6 +870,132 @@ async def health():
     return HealthResponse(status="healthy", version="1.0.0")
 
 
+# Test drill with known-good data for debugging
+TEST_DRILL = {
+    "name": "Test 2v1 Finishing",
+    "description": "Two attackers combine against one defender",
+    "field": {
+        "type": "HALF",
+        "attacking_direction": "NORTH",
+        "markings": True,
+        "goals": 1
+    },
+    "players": [
+        {"id": "GK", "role": "GOALKEEPER", "position": {"x": 50, "y": 97}},
+        {"id": "A1", "role": "ATTACKER", "position": {"x": 35, "y": 62}},
+        {"id": "A2", "role": "ATTACKER", "position": {"x": 65, "y": 62}},
+        {"id": "D1", "role": "DEFENDER", "position": {"x": 50, "y": 76}}
+    ],
+    "cones": [],
+    "cone_gates": [],
+    "mannequins": [],
+    "balls": [{"position": {"x": 35, "y": 62}}],
+    "actions": [
+        {"type": "DRIBBLE", "player": "A1", "to_position": {"x": 42, "y": 74}},
+        {"type": "RUN", "player": "A2", "to_position": {"x": 58, "y": 84}},
+        {"type": "PASS", "from_player": "A1", "to_player": "A2"},
+        {"type": "SHOT", "player": "A2", "target": "GOAL"}
+    ],
+    "coaching_points": ["Commit the defender before passing", "Time the run to stay onside"],
+    "variations": ["One-touch finish", "Add second defender"]
+}
+
+TEST_DESCRIPTION = """# Test 2v1 Finishing
+
+## Overview
+Two attackers combine against one defender to create a shooting opportunity. This drill focuses on combination play, timing of runs, and clinical finishing.
+
+**Players:** 4 (including 1 goalkeeper)  
+**Duration:** 10-15 minutes  
+**Intensity:** Medium-High  
+**Focus:** Finishing, combination play, movement off the ball
+
+---
+
+## Setup
+
+### Field
+- Half field with one full-size goal
+- Goalkeeper in goal
+
+### Starting Positions
+- **GK (Goalkeeper):** In goal, central position
+- **A1 (Attacker):** Left side, just above halfway line with the ball
+- **A2 (Attacker):** Right side, level with A1
+- **D1 (Defender):** Central, between attackers and goal
+
+### Equipment
+- 1 ball
+- Bibs to differentiate attackers and defender
+
+---
+
+## Sequence of Play
+
+1. **A1 dribbles forward** — A1 drives toward the defender to commit them and create space
+2. **A2 makes a diagonal run** — As A1 engages the defender, A2 runs into the space behind
+3. **A1 passes to A2** — Once the defender commits, A1 releases the ball to A2
+4. **A2 shoots on goal** — A2 finishes first time or with a touch
+
+---
+
+## Coaching Points
+
+- **Commit the defender:** A1 must drive at D1 to force a decision
+- **Timing of the run:** A2 waits until A1 has engaged the defender before moving
+- **Weight of pass:** Ball should arrive in A2's stride
+- **Finishing technique:** Strike across the goalkeeper to the far corner
+
+---
+
+## Variations
+
+| Variation | Description |
+|-----------|-------------|
+| One-touch finish | A2 must finish first time |
+| Add defender | Include D2 to increase difficulty |
+"""
+
+
+@app.get("/api/test-drill", response_model=DrillResponse)
+async def test_drill():
+    """
+    Test endpoint that renders a known-good drill.
+    Use this to verify the rendering pipeline works.
+    Hit this endpoint to check if SVG generation is working.
+    """
+    try:
+        drill = Drill.model_validate(TEST_DRILL)
+        
+        print(f"[TEST] Rendering test drill with {len(drill.actions)} actions")
+        for i, action in enumerate(drill.actions):
+            print(f"[TEST]   Action {i+1}: {action}")
+        
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as f:
+            svg_path = f.name
+        
+        render(drill, svg_path)
+        
+        with open(svg_path, 'r') as f:
+            svg_content = f.read()
+        
+        os.unlink(svg_path)
+        
+        print(f"[TEST] SVG generated: {len(svg_content)} bytes")
+        
+        return DrillResponse(
+            success=True,
+            drill_name=drill.name,
+            svg=base64.b64encode(svg_content.encode()).decode(),
+            description=TEST_DESCRIPTION,
+            drill_json=TEST_DRILL
+        )
+        
+    except Exception as e:
+        print(f"[TEST] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Test render error: {str(e)}")
+
+
 @app.post("/api/generate-drill", response_model=DrillResponse)
 async def generate_drill(request: DrillRequest):
     """
@@ -739,13 +1005,22 @@ async def generate_drill(request: DrillRequest):
     """
     try:
         # 1. Call Claude API
+        print(f"[GENERATE] Received request: {request.prompt[:100]}...")
         result = call_claude_api(request)
         
         if not result or "drill" not in result:
+            print(f"[GENERATE] ERROR: Invalid response - result keys: {result.keys() if result else 'None'}")
             raise ValueError("Invalid response from Claude API")
         
-        # 2. Validate drill against schema
+        # 2. Log what Claude returned
         drill_data = result["drill"]
+        print(f"[GENERATE] Claude returned drill: {drill_data.get('name', 'NO NAME')}")
+        print(f"[GENERATE] Players: {len(drill_data.get('players', []))}")
+        print(f"[GENERATE] Actions: {len(drill_data.get('actions', []))}")
+        
+        # Log each action
+        for i, action in enumerate(drill_data.get('actions', [])):
+            print(f"[GENERATE]   Action {i+1}: {action}")
         
         # Ensure required fields have defaults
         drill_data.setdefault("cones", [])
@@ -755,6 +1030,7 @@ async def generate_drill(request: DrillRequest):
         drill_data.setdefault("variations", [])
         
         drill = Drill.model_validate(drill_data)
+        print(f"[GENERATE] Validated - rendering {len(drill.actions)} actions")
         
         # 3. Render to SVG
         with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as f:
@@ -764,6 +1040,8 @@ async def generate_drill(request: DrillRequest):
         
         with open(svg_path, 'r') as f:
             svg_content = f.read()
+        
+        print(f"[GENERATE] SVG generated: {len(svg_content)} bytes")
         
         # Clean up temp file
         os.unlink(svg_path)

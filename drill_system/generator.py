@@ -8,7 +8,7 @@ import json
 import os
 from typing import Optional
 
-from anthropic import Anthropic
+from openai import OpenAI
 
 from schema import (
     Drill, CoachRequest, CoachConstraints,
