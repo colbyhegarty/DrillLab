@@ -6,24 +6,29 @@ FastAPI backend that:
 2. Calls Claude API to generate drill JSON + description
 3. Renders the drill to SVG
 4. Returns SVG + description to frontend
+5. Serves drill library (pre-approved drills)
 """
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import anthropic
 import tempfile
 import base64
 import json
 import os
 import sys
+from pathlib import Path
 
 # Add drill_system to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'drill_system'))
 
 from drill_system.schema import Drill
 from drill_system.renderer import render
+
+# Library file path (in same directory as main.py)
+LIBRARY_FILE = Path(__file__).parent / "library_drills.json"
 
 # ============================================================
 # FASTAPI APP SETUP
@@ -106,8 +111,180 @@ class HealthResponse(BaseModel):
 
 
 # ============================================================
-# CLAUDE API INTEGRATION
+# DRILL LIBRARY - Models and Helpers
 # ============================================================
+
+class LibraryDrill(BaseModel):
+    """A drill in the library"""
+    id: str
+    name: str
+    description: str
+    category: Optional[str] = None
+    setup: Optional[str] = None
+    instructions: Optional[str] = None
+    variations: Optional[str] = None
+    coaching_points: Optional[str] = None
+    age_group: Optional[str] = None
+    player_count: Optional[str] = None
+    duration: Optional[str] = None
+    difficulty: Optional[str] = None
+    drill_json: Dict[str, Any]  # The diagram data
+    source_url: Optional[str] = None
+    source_site: Optional[str] = None
+
+
+class LibraryDrillResponse(BaseModel):
+    """Single drill with rendered SVG"""
+    success: bool
+    drill: LibraryDrill
+    svg: str  # Base64 encoded SVG (rendered on-demand)
+
+
+class LibraryListResponse(BaseModel):
+    """List of drills in library"""
+    success: bool
+    count: int
+    drills: List[Dict[str, Any]]  # Drill metadata without SVG
+
+
+def load_library() -> List[Dict]:
+    """Load drill library from JSON file"""
+    if not LIBRARY_FILE.exists():
+        return []
+    try:
+        with open(LIBRARY_FILE, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[LIBRARY] Error loading library: {e}")
+        return []
+
+
+def render_drill_to_svg(drill_json: Dict) -> str:
+    """Render drill JSON to base64 SVG"""
+    # Ensure required fields
+    drill_json.setdefault("cones", [])
+    drill_json.setdefault("cone_gates", [])
+    drill_json.setdefault("mannequins", [])
+    drill_json.setdefault("coaching_points", [])
+    drill_json.setdefault("variations", [])
+    
+    drill = Drill.model_validate(drill_json)
+    
+    with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as f:
+        svg_path = f.name
+    
+    render(drill, svg_path)
+    
+    with open(svg_path, 'r') as f:
+        svg_content = f.read()
+    
+    os.unlink(svg_path)
+    
+    return base64.b64encode(svg_content.encode()).decode()
+
+
+# ============================================================
+# LIBRARY API ENDPOINTS
+# ============================================================
+
+@app.get("/api/library", response_model=LibraryListResponse)
+async def get_library(
+    category: Optional[str] = None,
+    limit: int = 100
+):
+    """
+    Get list of all drills in the library.
+    
+    Returns metadata only (no SVG) for fast loading.
+    Use /api/library/{id} to get full drill with rendered SVG.
+    """
+    drills = load_library()
+    
+    # Filter by category if specified
+    if category:
+        drills = [d for d in drills if d.get('category', '').lower() == category.lower()]
+    
+    # Limit results
+    drills = drills[:limit]
+    
+    # Return metadata only (exclude drill_json to keep response light)
+    drill_summaries = []
+    for d in drills:
+        summary = {
+            "id": d.get("id"),
+            "name": d.get("name"),
+            "description": d.get("description", ""),
+            "category": d.get("category"),
+            "age_group": d.get("age_group"),
+            "player_count": d.get("player_count"),
+            "duration": d.get("duration"),
+            "difficulty": d.get("difficulty"),
+        }
+        drill_summaries.append(summary)
+    
+    return LibraryListResponse(
+        success=True,
+        count=len(drill_summaries),
+        drills=drill_summaries
+    )
+
+
+@app.get("/api/library/{drill_id}")
+async def get_library_drill(drill_id: str):
+    """
+    Get a specific drill from the library with freshly rendered SVG.
+    
+    SVG is rendered on-demand using the current renderer.py,
+    so changes to the renderer are reflected immediately.
+    """
+    drills = load_library()
+    
+    # Find the drill
+    drill_data = None
+    for d in drills:
+        if d.get("id") == drill_id:
+            drill_data = d
+            break
+    
+    if not drill_data:
+        raise HTTPException(status_code=404, detail=f"Drill {drill_id} not found")
+    
+    # Check if it has diagram data
+    drill_json = drill_data.get("drill_json")
+    if not drill_json:
+        raise HTTPException(status_code=400, detail=f"Drill {drill_id} has no diagram data")
+    
+    try:
+        # Render SVG on-demand
+        svg_base64 = render_drill_to_svg(drill_json)
+        
+        return {
+            "success": True,
+            "drill": drill_data,
+            "svg": svg_base64
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error rendering drill: {str(e)}")
+
+
+@app.get("/api/library/categories/list")
+async def get_library_categories():
+    """Get list of all categories in the library"""
+    drills = load_library()
+    
+    categories = set()
+    for d in drills:
+        cat = d.get("category")
+        if cat:
+            categories.add(cat)
+    
+    return {
+        "success": True,
+        "categories": sorted(list(categories))
+    }
+
+
+
 
 # Tool definition for structured output
 DRILL_TOOL = {

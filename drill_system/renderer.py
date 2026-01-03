@@ -53,76 +53,198 @@ MANNEQUIN_COLOR = "#2d3436"  # Dark gray for mannequins
 class FieldRenderer:
     """Renders the soccer field"""
     
-    def __init__(self, ax, drill: Drill):
+    def __init__(self, ax, drill: Drill, padding: float = 8.0):
         self.ax = ax
+        self.drill = drill
         self.field = drill.field
+        self.padding = padding
         self.attacking_goal_y = 100 if self.field.attacking_direction == AttackingDirection.NORTH else 0
         
-        # Determine y-axis limits based on field type and goals
-        # If no goals or full field, show the whole field
-        # If half field WITH goals, show only the attacking half
-        self.is_half_field = self.field.type == FieldType.HALF
+        # Calculate content bounds
+        self._calculate_bounds()
+    
+    def _calculate_bounds(self):
+        """Calculate the bounding box of all drill content"""
+        x_coords = []
+        y_coords = []
         
-        if self.is_half_field and self.field.goals > 0:
-            # Half field with goal: show only attacking half
+        # Collect all entity positions
+        for player in self.drill.players:
+            x_coords.append(player.position.x)
+            y_coords.append(player.position.y)
+        
+        for cone in self.drill.cones:
+            x_coords.append(cone.position.x)
+            y_coords.append(cone.position.y)
+        
+        for gate in self.drill.cone_gates:
+            x_coords.append(gate.center.x - gate.width/2)
+            x_coords.append(gate.center.x + gate.width/2)
+            y_coords.append(gate.center.y)
+        
+        for ball in self.drill.balls:
+            x_coords.append(ball.position.x)
+            y_coords.append(ball.position.y)
+        
+        for mannequin in self.drill.mannequins:
+            x_coords.append(mannequin.position.x)
+            y_coords.append(mannequin.position.y)
+        
+        # Collect action endpoints
+        for action in self.drill.actions:
+            action_type = getattr(action, 'type', None)
+            if action_type in ["RUN", "DRIBBLE"]:
+                x_coords.append(action.to_position.x)
+                y_coords.append(action.to_position.y)
+            elif action_type == "SHOT":
+                # Shot goes to goal - include goal position
+                y_coords.append(self.attacking_goal_y)
+                x_coords.append(50)  # Goal center
+        
+        # Default bounds if no content
+        if not x_coords:
+            x_coords = [25, 75]
+        if not y_coords:
+            y_coords = [25, 75]
+        
+        # Calculate raw bounds
+        self.content_x_min = min(x_coords)
+        self.content_x_max = max(x_coords)
+        self.content_y_min = min(y_coords)
+        self.content_y_max = max(y_coords)
+        
+        # Apply padding
+        self.x_min = max(0, self.content_x_min - self.padding)
+        self.x_max = min(100, self.content_x_max + self.padding)
+        self.y_min = max(0, self.content_y_min - self.padding)
+        self.y_max = min(100, self.content_y_max + self.padding)
+        
+        # Handle goals - expand to show goal areas if needed
+        if self.field.goals > 0:
+            # Check if content is near the attacking goal (NORTH = 100, SOUTH = 0)
             if self.field.attacking_direction == AttackingDirection.NORTH:
-                self.y_min = 50
-                self.y_max = 100
-            else:
+                if self.content_y_max > 70:  # Content is near top goal
+                    self.y_max = 100
+                    # Only expand y_min to show 18-yard box if not already showing more
+                    if self.y_min > 78:
+                        self.y_min = 78
+            else:  # SOUTH
+                if self.content_y_min < 30:  # Content is near bottom goal
+                    self.y_min = 0
+                    if self.y_max < 22:
+                        self.y_max = 22
+        
+        # Handle second goal for 2-goal drills (small-sided games)
+        if self.field.goals > 1:
+            other_goal_y = 0 if self.attacking_goal_y == 100 else 100
+            
+            # Check if content extends toward the other goal
+            if other_goal_y == 0 and self.content_y_min < 30:
                 self.y_min = 0
-                self.y_max = 50
-        else:
-            # Full field OR half field without goals: show everything
-            self.y_min = 0
-            self.y_max = 100
+                # Ensure we show the 18-yard box area
+                if self.content_y_min < 22:
+                    pass  # Already showing goal area
+            elif other_goal_y == 100 and self.content_y_max > 70:
+                self.y_max = 100
+            
+            # For small-sided games with 2 goals, check if there are goalkeepers
+            # and expand to show both goal areas
+            has_gk_top = any(p.position.y > 90 for p in self.drill.players if p.role.value == "GOALKEEPER")
+            has_gk_bottom = any(p.position.y < 10 for p in self.drill.players if p.role.value == "GOALKEEPER")
+            
+            if has_gk_top:
+                self.y_max = 100
+            if has_gk_bottom:
+                self.y_min = 0
+        
+        # Ensure minimum view size (at least 30x30)
+        min_size = 30
+        x_size = self.x_max - self.x_min
+        y_size = self.y_max - self.y_min
+        
+        if x_size < min_size:
+            center_x = (self.x_min + self.x_max) / 2
+            self.x_min = max(0, center_x - min_size/2)
+            self.x_max = min(100, center_x + min_size/2)
+        
+        if y_size < min_size:
+            center_y = (self.y_min + self.y_max) / 2
+            self.y_min = max(0, center_y - min_size/2)
+            self.y_max = min(100, center_y + min_size/2)
     
     def draw(self):
         """Draw the complete field"""
-        self.ax.set_xlim(0, 100)
+        self.ax.set_xlim(self.x_min, self.x_max)
         self.ax.set_ylim(self.y_min, self.y_max)
         
         self._draw_grass()
         self._draw_outline()
         
         if self.field.markings:
-            # Always draw halfway line if it's visible
+            # Draw halfway line if it's visible
             if self.y_min <= 50 <= self.y_max:
                 self._draw_halfway_line()
             
+            # Draw center circle if visible (full field and center is in view)
             if self.field.type == FieldType.FULL:
-                self._draw_center_circle()
+                if self.y_min <= 50 <= self.y_max and self.x_min <= 50 <= self.x_max:
+                    self._draw_center_circle()
             
-            if self.field.goals > 0:
-                self._draw_goal_area(self.attacking_goal_y)
+            # Draw goal areas with markings (18-yard box, etc.) at actual goal lines
+            if self.field.goals >= 1:
+                # Top goal (y=100) - draw if visible
+                if self.y_max >= 85:
+                    self._draw_goal_area(100)
                 
-                if self.field.goals > 1 and self.field.type == FieldType.FULL:
-                    other_goal = 0 if self.attacking_goal_y == 100 else 100
-                    self._draw_goal_area(other_goal)
+                # Bottom goal (y=0) - draw if visible and we have 2 goals
+                if self.field.goals >= 2 and self.y_min <= 15:
+                    self._draw_goal_area(0)
+        
+        elif self.field.goals > 0:
+            # No markings but has goals = small-sided game
+            # Draw goals at the FIELD BOUNDARIES (content bounds), not at y=0/100
+            
+            # Top goal at the top boundary of the content
+            if self.field.goals >= 1:
+                # Use content_y_max (where cones/players are) as the goal line
+                top_goal_y = self.content_y_max
+                self._draw_field_goal(top_goal_y, goal_width=8)
+            
+            # Bottom goal at the bottom boundary
+            if self.field.goals >= 2:
+                bottom_goal_y = self.content_y_min
+                self._draw_field_goal(bottom_goal_y, goal_width=8)
         
         self.ax.set_aspect("equal")
         self.ax.axis("off")
     
     def _draw_grass(self):
-        """Draw striped grass"""
+        """Draw striped grass covering the visible area"""
         stripe_width = 10
-        for i in range(0, 100, stripe_width):
+        # Start from the beginning of the stripe that contains x_min
+        start_x = int(self.x_min // stripe_width) * stripe_width
+        # End at the stripe that contains x_max
+        end_x = int(self.x_max // stripe_width + 1) * stripe_width + stripe_width
+        
+        for i in range(start_x, end_x, stripe_width):
             color = GRASS_LIGHT if (i // stripe_width) % 2 == 0 else GRASS_DARK
             self.ax.add_patch(patches.Rectangle(
-                (i, self.y_min), stripe_width, self.y_max - self.y_min, 
+                (i, self.y_min - 5), stripe_width, (self.y_max - self.y_min) + 10, 
                 color=color, zorder=0
             ))
     
     def _draw_outline(self):
-        """Draw field outline"""
+        """Draw field outline for the visible area"""
+        # Draw a subtle border around the view area
         self.ax.plot(
-            [0, 100, 100, 0, 0], 
+            [self.x_min, self.x_max, self.x_max, self.x_min, self.x_min], 
             [self.y_min, self.y_min, self.y_max, self.y_max, self.y_min], 
-            color=LINE_COLOR, lw=2, zorder=1
+            color=LINE_COLOR, lw=1.5, alpha=0.5, zorder=1
         )
     
     def _draw_halfway_line(self):
-        """Draw halfway line"""
-        self.ax.plot([0, 100], [50, 50], color=LINE_COLOR, lw=1.5, zorder=1)
+        """Draw halfway line within visible area"""
+        self.ax.plot([self.x_min, self.x_max], [50, 50], color=LINE_COLOR, lw=1.5, zorder=1)
     
     def _draw_center_circle(self):
         """Draw center circle"""
@@ -132,7 +254,7 @@ class FieldRenderer:
         self.ax.scatter(50, 50, s=20, c=LINE_COLOR, zorder=2)
     
     def _draw_goal_area(self, goal_y: float):
-        """Draw penalty box, 6-yard box, and goal"""
+        """Draw penalty box, 6-yard box, and goal at the actual goal line (y=0 or y=100)"""
         into = -1 if goal_y == 100 else 1
         
         pen_y = goal_y + into * 18
@@ -152,8 +274,58 @@ class FieldRenderer:
         # Penalty spot
         self.ax.scatter(50, pen_spot_y, s=30, c=LINE_COLOR, zorder=2)
         
-        # Goal
-        self.ax.plot([44, 56], [goal_y, goal_y], color=LINE_COLOR, lw=4, zorder=2)
+        # Goal with net
+        self._draw_goal_with_net(50, goal_y, width=8)
+    
+    def _draw_goal_with_net(self, cx: float, goal_line_y: float, width: float = 8):
+        """
+        Draw a goal with posts, crossbar, and net.
+        The gray back line sits ON goal_line_y, net extends INTO the field.
+        
+        Args:
+            cx: Center x position of goal
+            goal_line_y: Y position where the goal line is (gray back line sits here)
+            width: Width of goal
+        """
+        goal_color = "white"
+        post_width = 3.0
+        goal_depth = 3  # How far the net extends into the field
+        
+        # Net extends INTO the field (toward center)
+        # If goal_line is at top (high y), net goes DOWN (negative)
+        # If goal_line is at bottom (low y), net goes UP (positive)
+        net_direction = -1 if goal_line_y >= 50 else 1
+        
+        # Crossbar position (front of goal, inside the field)
+        crossbar_y = goal_line_y + net_direction * goal_depth
+        
+        # Posts (vertical lines from crossbar back to goal line)
+        self.ax.plot([cx - width/2, cx - width/2], [crossbar_y, goal_line_y], 
+                    color=goal_color, lw=post_width, solid_capstyle='round', zorder=6)
+        self.ax.plot([cx + width/2, cx + width/2], [crossbar_y, goal_line_y], 
+                    color=goal_color, lw=post_width, solid_capstyle='round', zorder=6)
+        
+        # Crossbar (front of goal, inside field)
+        self.ax.plot([cx - width/2, cx + width/2], [crossbar_y, crossbar_y], 
+                    color=goal_color, lw=post_width, solid_capstyle='round', zorder=6)
+        
+        # Back of net (ON the goal line)
+        self.ax.plot([cx - width/2, cx + width/2], [goal_line_y, goal_line_y], 
+                    color='gray', lw=1.5, alpha=0.6, zorder=5)
+        
+        # Net lines (vertical strings)
+        num_strings = int(width) + 1
+        for i in range(num_strings):
+            net_x = cx - width/2 + i * (width / (num_strings - 1)) if num_strings > 1 else cx
+            self.ax.plot([net_x, net_x], [crossbar_y, goal_line_y],
+                        color='gray', lw=0.5, alpha=0.4, zorder=5)
+    
+    def _draw_field_goal(self, goal_line_y: float, goal_width: float = 8):
+        """
+        Draw just a goal (no markings) at a specific y position.
+        Used for small-sided games where goals are at the field boundary.
+        """
+        self._draw_goal_with_net(50, goal_line_y, width=goal_width)
 
 
 # ============================================================
@@ -258,10 +430,10 @@ class EntityRenderer:
 class ActionRenderer:
     """Renders movement arrows with consistent styling"""
     
-    # Consistent styling across all action types
-    LINE_WIDTH = 2.0
-    ARROW_HEAD_WIDTH = 1.8
-    ARROW_HEAD_LENGTH = 1.5
+    # Consistent styling across all action types - SMALLER arrows
+    LINE_WIDTH = 1.8
+    ARROW_HEAD_WIDTH = 1.2  # Reduced from 1.8
+    ARROW_HEAD_LENGTH = 1.0  # Reduced from 1.5
     
     # Offset from player circles (larger to clear the circle)
     PLAYER_OFFSET = 2.5
@@ -366,7 +538,7 @@ class ActionRenderer:
         
         self.ax.plot(
             x_line, y_line, '--',
-            color='yellow', lw=self.LINE_WIDTH, zorder=4,
+            color='white', lw=self.LINE_WIDTH, zorder=4,
             dashes=(5, 3)
         )
         
@@ -376,7 +548,7 @@ class ActionRenderer:
             dx * (1 - line_end_ratio), dy * (1 - line_end_ratio),
             head_width=self.ARROW_HEAD_WIDTH,
             head_length=self.ARROW_HEAD_LENGTH,
-            fc="yellow", ec="yellow", lw=0,
+            fc="white", ec="white", lw=0,
             length_includes_head=True, zorder=5
         )
     
@@ -510,12 +682,20 @@ class PositionTracker:
         self.ball_position: Optional[Tuple[float, float]] = None
         self.ball_holder: Optional[str] = None
         
-        # Initialize ball position from first ball
-        if drill.balls:
-            ball = drill.balls[0]
-            self.ball_position = (ball.position.x, ball.position.y)
+        # Determine ball holder from the FIRST action (most reliable method)
+        # If first action is PASS or DRIBBLE, that player has the ball
+        if drill.actions:
+            first_action = drill.actions[0]
+            action_type = getattr(first_action, 'type', None)
             
-            # Find which player is closest to the ball
+            if action_type == "PASS":
+                self.ball_holder = first_action.from_player
+            elif action_type in ["DRIBBLE", "SHOT"]:
+                self.ball_holder = first_action.player
+        
+        # Fallback: if no actions, find player closest to ball position
+        if not self.ball_holder and drill.balls:
+            ball = drill.balls[0]
             min_dist = float('inf')
             for player in drill.players:
                 dx = player.position.x - ball.position.x
@@ -524,6 +704,12 @@ class PositionTracker:
                 if dist < min_dist:
                     min_dist = dist
                     self.ball_holder = player.id
+        
+        # Set ball position at the holder's position
+        if self.ball_holder and self.ball_holder in self.player_positions:
+            self.ball_position = self.player_positions[self.ball_holder]
+        elif drill.balls:
+            self.ball_position = (drill.balls[0].position.x, drill.balls[0].position.y)
     
     def get_player_position(self, player_id: str) -> Tuple[float, float]:
         """Get the current position of a player"""
@@ -599,7 +785,7 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
 # MAIN RENDER FUNCTION
 # ============================================================
 
-BALL_OFFSET = 2.5  # How far to offset ball from player center (increased for visibility)
+BALL_OFFSET = 1.8  # Offset ball from player center - small enough to still overlap player circle slightly
 
 def render(
     drill: Drill,
@@ -657,12 +843,19 @@ def render(
     # Initialize position tracker (need this before drawing ball)
     tracker = PositionTracker(drill)
     
-    # Draw balls with offset toward first action direction
+    # Draw balls - if a player is holding the ball, draw it at their position with slight offset
     for ball in drill.balls:
+        # Default to ball's specified position
         ball_x, ball_y = ball.position.x, ball.position.y
         
-        # Find direction to offset the ball
+        # If a player is holding the ball, use the PLAYER's position (not ball position)
         if tracker.ball_holder:
+            # Get the player's actual position
+            holder = next((p for p in drill.players if p.id == tracker.ball_holder), None)
+            if holder:
+                ball_x, ball_y = holder.position.x, holder.position.y
+            
+            # Offset slightly toward first action direction
             direction = _get_first_action_direction(drill, tracker.ball_holder)
             if direction:
                 ball_x += direction[0] * BALL_OFFSET
