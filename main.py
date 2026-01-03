@@ -19,6 +19,7 @@ import base64
 import json
 import os
 import sys
+import random
 from pathlib import Path
 
 # Add drill_system to path
@@ -968,6 +969,113 @@ Remember: The diagram and description will be shown side by side. They MUST matc
 """
 
 
+def get_reference_drills(category: Optional[str], num_examples: int = 2) -> List[Dict]:
+    """
+    Get random reference drills from the library for a given category.
+    
+    Args:
+        category: Drill category (e.g., "Finishing", "Possession")
+        num_examples: Number of examples to return (1-3)
+    
+    Returns:
+        List of drill dictionaries with setup, instructions, and drill_json
+    """
+    library = load_library()
+    
+    if not library:
+        return []
+    
+    # Filter by category if specified
+    if category:
+        # Normalize category for matching
+        category_lower = category.lower().strip()
+        matching = [
+            d for d in library 
+            if d.get('category', '').lower().strip() == category_lower
+            or category_lower in d.get('category', '').lower()
+        ]
+        
+        # If no exact match, try partial matching on drill type keywords
+        if not matching:
+            category_keywords = {
+                'finishing': ['finishing', 'shooting', 'shot', 'goal'],
+                'possession': ['possession', 'rondo', 'keep away', 'passing'],
+                'passing': ['passing', 'pass', 'combination'],
+                'dribbling': ['dribbling', 'dribble', '1v1', 'skills'],
+                'defending': ['defending', 'defensive', 'pressure', 'tackle'],
+                'crossing': ['crossing', 'cross', 'wing'],
+                'conditioning': ['conditioning', 'fitness', 'endurance'],
+                'warm up': ['warm up', 'warmup', 'activation'],
+                'small sided': ['small sided', 'ssg', 'game', 'scrimmage'],
+            }
+            
+            keywords = category_keywords.get(category_lower, [category_lower])
+            matching = [
+                d for d in library
+                if any(kw in d.get('name', '').lower() or kw in d.get('category', '').lower() 
+                       for kw in keywords)
+            ]
+    else:
+        matching = library
+    
+    # If still no matches, return random drills from full library
+    if not matching:
+        matching = library
+    
+    # Randomly select up to num_examples drills
+    num_to_select = min(num_examples, len(matching))
+    selected = random.sample(matching, num_to_select)
+    
+    return selected
+
+
+def format_reference_drills_for_prompt(drills: List[Dict]) -> str:
+    """Format reference drills for inclusion in the Claude prompt"""
+    if not drills:
+        return ""
+    
+    sections = ["\n\n## REFERENCE DRILLS FROM LIBRARY"]
+    sections.append("Study these real drills for inspiration. Create something NEW but use similar quality and structure.")
+    sections.append("Pay special attention to the drill_json structure - your output should follow the same patterns.\n")
+    
+    for i, drill in enumerate(drills, 1):
+        sections.append(f"### Reference Drill {i}: {drill.get('name', 'Unnamed')}")
+        sections.append(f"**Category:** {drill.get('category', 'General')}")
+        
+        if drill.get('setup') or drill.get('setup_text'):
+            setup = drill.get('setup') or drill.get('setup_text', '')
+            sections.append(f"\n**Setup:**\n{setup[:500]}...")  # Truncate if very long
+        
+        if drill.get('instructions') or drill.get('instructions_text'):
+            instructions = drill.get('instructions') or drill.get('instructions_text', '')
+            sections.append(f"\n**Instructions:**\n{instructions[:500]}...")
+        
+        # Include the drill_json - this is crucial for diagram quality
+        if drill.get('drill_json'):
+            drill_json = drill['drill_json']
+            sections.append(f"\n**Diagram JSON (use similar structure):**")
+            sections.append("```json")
+            
+            # Format key parts of the drill_json
+            formatted_json = {
+                "field": drill_json.get('field', {}),
+                "players": drill_json.get('players', []),
+                "cones": drill_json.get('cones', [])[:4],  # Limit to first 4 cones
+                "actions": drill_json.get('actions', []),
+                "balls": drill_json.get('balls', [])
+            }
+            sections.append(json.dumps(formatted_json, indent=2))
+            sections.append("```")
+        
+        sections.append("")  # Blank line between drills
+    
+    sections.append("---")
+    sections.append("Now create a NEW drill inspired by these examples but tailored to the user's specific requirements.")
+    sections.append("Your drill should be ORIGINAL - do not copy directly, but learn from the structure and quality.\n")
+    
+    return "\n".join(sections)
+
+
 def call_claude_api(request: DrillRequest) -> dict:
     """Call Claude API to generate drill"""
     
@@ -983,6 +1091,31 @@ def call_claude_api(request: DrillRequest) -> dict:
         prompt_parts.append("Create a soccer drill")
     
     prompt_parts.append(f"based on this request: {request.prompt}")
+    
+    # Get reference drills from library based on drill type/category
+    reference_category = request.drill_type  # Use drill_type as category
+    if not reference_category:
+        # Try to infer category from prompt
+        prompt_lower = request.prompt.lower()
+        if any(word in prompt_lower for word in ['finish', 'shoot', 'shot', 'goal', 'score']):
+            reference_category = 'Finishing'
+        elif any(word in prompt_lower for word in ['possess', 'rondo', 'keep']):
+            reference_category = 'Possession'
+        elif any(word in prompt_lower for word in ['pass', 'combination', 'one-two']):
+            reference_category = 'Passing'
+        elif any(word in prompt_lower for word in ['dribbl', '1v1', 'skill']):
+            reference_category = 'Dribbling'
+        elif any(word in prompt_lower for word in ['defend', 'press', 'tackle']):
+            reference_category = 'Defending'
+    
+    # Get 1-3 reference drills
+    reference_drills = get_reference_drills(reference_category, num_examples=2)
+    reference_prompt = format_reference_drills_for_prompt(reference_drills)
+    
+    if reference_drills:
+        print(f"[GENERATE] Using {len(reference_drills)} reference drills from category: {reference_category}")
+        for rd in reference_drills:
+            print(f"[GENERATE]   - {rd.get('name', 'Unnamed')}")
     
     # IMPORTANT: Resources are AVAILABLE, not required
     prompt_parts.append(f"\n\n## AVAILABLE RESOURCES (Maximum - use what makes sense for the drill)")
@@ -1045,6 +1178,9 @@ def call_claude_api(request: DrillRequest) -> dict:
     # Additional notes
     if request.additional_notes:
         prompt_parts.append(f"\n\nAdditional Notes: {request.additional_notes}")
+    
+    # Add reference drills to the prompt
+    prompt_parts.append(reference_prompt)
     
     prompt_parts.append("\n\nUse the create_drill tool to return both the drill JSON and a detailed coach description.")
     
