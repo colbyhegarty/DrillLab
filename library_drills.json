@@ -1,1 +1,1462 @@
-[]
+[
+  {
+    "id": "33a7c572-cdcf-4ec0-bbcd-a17fc10094be",
+    "name": "5v3v1 Rondo Possession Drill",
+    "description": "5v3v1 Rondo Possession Drillrondo drill soccer, possession training youth, transition rondo drill, switching play possession gameImagePrintRONDO DRILL SOCCER, POSSESSION TRAINING YOUTH, TRANSITION RONDO DRILL, SWITCHING PLAY POSSESSION GAMEDrill Quick GlanceAge: 10+Field: 20X20Players: 8+Focus: POSSESSIONDifficulty: MEDIUMTime: 20 mins.Goalkeeper: NOTEAMRating: 0 / 5Views: 1,054Published: 10/8/2025Author: Chris JohnsonDrill ObjectiveThis drill sharpens possession skills while teaching players to",
+    "category": "Possession",
+    "age_group": "10+",
+    "player_count": "8+",
+    "duration": "20 mins.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": false,
+    "setup_text": "\u2022 Mark out a 20x20 yard grid with cones\n\u2022 Divide players into one team of five and one team of three, each wearing different colored jerseys\n\u2022 From the team of five, position four players around the outside of the grid and one player inside\n\u2022 Place all three players from the team of three inside the grid\n\u2022 Have extra balls nearby to keep the drill moving\n\u2022 For teams with 16 or more players, set up two separate grids running simultaneously",
+    "instructions_text": "1. Start with the team of three keeping possession against the single defender in a 3v1 rondo inside the grid\n2. The three attackers pass and move to maintain possession while the lone defender pressures\n3. When the single defender wins the ball, they immediately pass to any outside player\n4. Once the ball reaches an outside player, the game becomes a 5v3 rondo with four outside players and one inside player keeping possession\n5. The team of three now defends and tries to win the ball back\n6. As the single player passes to the outside, they switch roles with one of the three defenders who becomes the new single attacker\n7. The four outside players stay outside and work the ball around the perimeter while using the inside player\n8. If the team of three wins possession back, play immediately switches to a 3v1 rondo again inside the grid\n9. Continue this back and forth pattern as possession changes hands\n10. Keep score by awarding points for completing a set number of consecutive passes",
+    "variations_text": "\u2022 Shrink the grid to 15x15 yards for advanced players to increase pressure and speed\n\u2022 Expand the grid to 25x25 yards for beginners who need more time and space\n\u2022 Limit all players to two touches to speed up play\n\u2022 Require one-touch passing for outside players only\n\u2022 Award bonus points for switching the ball from one side of the grid to the other\n\u2022 For teams of 14, play 7v7 with four outside, three inside as defenders, and seven inside attacking\n\u2022 Add a rule where the ball must go through the middle player before counting toward the pass total\n\u2022 Create a time limit where teams see how many passes they can complete in 90 seconds\n\u2022 Make outside players move along their side rather than staying in corners\n\u2022 Remove the switching rule and keep the same single player for 60 seconds before rotating",
+    "coaching_points_text": "\u2022 The transition moment is critical - players must switch their mindset from attack to defense instantly\n\u2022 Inside attackers should constantly move to create passing angles and triangles of support\n\u2022 The single defender needs to be smart about pressure - cut off one passing lane to force a predictable pass\n\u2022 Outside players must stay alert and ready to receive even though they're not currently in the action\n\u2022 Body shape matters when receiving - open up to see multiple passing options\n\u2022 Quick one or two touch passing keeps the ball moving and makes defending harder\n\u2022 Defenders should work together to press and cover passing lanes as a unit\n\u2022 Communication is huge - call for the ball and let teammates know when pressure is coming\n\u2022 Players switching roles need to move quickly into their new position\n\u2022 The pace should stay high - this isn't a walking drill",
+    "drill_json": {
+      "name": "5v3v1 Rondo Possession Drill",
+      "description": "Dynamic possession drill alternating between 3v1 and 5v3 scenarios based on ball possession changes",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 38,
+            "y": 49
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 48,
+            "y": 38
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 49,
+            "y": 62
+          }
+        },
+        {
+          "id": "A4",
+          "role": "ATTACKER",
+          "position": {
+            "x": 62,
+            "y": 50
+          }
+        },
+        {
+          "id": "A5",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50,
+            "y": 50
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 46,
+            "y": 45
+          }
+        },
+        {
+          "id": "D2",
+          "role": "DEFENDER",
+          "position": {
+            "x": 53,
+            "y": 53
+          }
+        },
+        {
+          "id": "D3",
+          "role": "DEFENDER",
+          "position": {
+            "x": 45,
+            "y": 55
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 40,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 60,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 40,
+            "y": 60
+          }
+        },
+        {
+          "position": {
+            "x": 60,
+            "y": 60
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 45,
+            "y": 55
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "D3",
+          "to_player": "D2"
+        }
+      ],
+      "coaching_points": [
+        "Quick decision making when possession changes",
+        "Constant movement and communication",
+        "Use both short and medium range passes",
+        "Apply immediate pressure when defending"
+      ],
+      "variations": [
+        "Limit touches for outside players",
+        "Add time pressure with set durations",
+        "Increase grid size for more technical players",
+        "Award bonus points for using inside player"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/5v3v1-rondo-possession-drill",
+    "published_at": "2026-01-03T01:06:15.090237"
+  },
+  {
+    "id": "735583f5-dc01-4532-bfba-87ecab397e3c",
+    "name": "5v3 Switching Rondo",
+    "description": "5v3 Switching Rondoswitching play rondo, dual grid possession drill, transitional rondo soccer, movement and positioning drillImagePrintSWITCHING PLAY RONDO, DUAL GRID POSSESSION DRILL, TRANSITIONAL RONDO SOCCER, MOVEMENT AND POSITIONING DRILLDrill Quick GlanceAge: 9+Field: 12x24Players: 10Focus: POSSESSIONDifficulty: MEDIUMTime: 20 MINS.Goalkeeper: NOTEAMRating: 0 / 5Views: 1,334Published: 10/26/2025Author: Chris JohnsonDrill ObjectiveThis drill trains players to recognize when possession is lo",
+    "category": "Possession",
+    "age_group": "9+",
+    "player_count": "10",
+    "duration": "20 MINS.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": false,
+    "setup_text": "\u2022 Set up two 12x12 yard grids using cones with about 5 yards of space between them\n\u2022 Divide players into two teams of five, each wearing different colored jerseys\n\u2022 In the first grid, place five players from one team and three players from the opposing team\n\u2022 Position the remaining two players from the defending team in the second grid\n\u2022 Keep extra balls near the coach to maintain flow when balls go out of play",
+    "instructions_text": "1. Start play with a 5v3 rondo in the first grid where five attackers work to maintain possession\n2. The three defenders press and try to win the ball\n3. When the three defenders win possession, they immediately switch play by passing to their two teammates waiting in the other grid\n4. As the ball travels to the second grid, three players from the original attacking team sprint to the second grid to defend\n5. The two players who were waiting now have three teammates join them to create a new 5v3 situation\n6. The two remaining players from the original attacking team stay in the first grid and wait\n7. Play continues with possession switching between grids each time the defending team wins the ball\n8. Rotate which three players transition to the other grid so everyone experiences different roles\n9. Keep the pace high and competitive throughout the drill",
+    "variations_text": "\u2022 Increase grid size to 15x15 yards to make possession easier for developing players\n\u2022 Shrink grids to 10x10 yards to increase difficulty and speed up decision making\n\u2022 Limit all players to two touches to force quicker passing\n\u2022 Require one-touch passing only for an advanced challenge\n\u2022 Award points for completing a set number of passes before switching grids\n\u2022 Add a rule where the switch pass must be played in the air\n\u2022 Create a time challenge where teams see how many successful switches they can complete in two minutes\n\u2022 Require a specific player type to make the switch pass, like only the player who won the ball\n\u2022 Add small goals in each grid that the defending team can score on after winning possession\n\u2022 Make four players transition instead of three to increase the defensive challenge\n\u2022 Place a neutral player between the grids who must touch every switch pass",
+    "coaching_points_text": "\u2022 The switch pass must be accurate and weighted properly to reach teammates in the other grid\n\u2022 Three players need to decide quickly who transitions to defend in the other grid\n\u2022 Players waiting in the empty grid should position themselves to receive the switch pass at good angles\n\u2022 Attackers in possession need constant movement to create passing options in tight space\n\u2022 First touch is critical in the small grid to keep the ball away from defenders\n\u2022 Defenders should press together and cut off passing lanes rather than chasing individually\n\u2022 Communication is huge during transitions so players know who's going and who's staying\n\u2022 Players transitioning to defend must sprint to apply pressure immediately in the new grid\n\u2022 The two waiting players should scan and anticipate when the switch might happen\n\u2022 Body shape when receiving matters to see multiple passing options and avoid pressure\n\u2022 Players staying behind should be ready in case the switch pass gets intercepted",
+    "drill_json": {
+      "name": "5v3 Switching Rondo",
+      "description": "Two-grid possession drill where teams switch between grids when possession is lost, creating continuous 5v3 scenarios with rapid transitions",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 30,
+            "y": 44
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 38,
+            "y": 36
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 47,
+            "y": 45
+          }
+        },
+        {
+          "id": "A4",
+          "role": "ATTACKER",
+          "position": {
+            "x": 37,
+            "y": 51
+          }
+        },
+        {
+          "id": "A5",
+          "role": "ATTACKER",
+          "position": {
+            "x": 31,
+            "y": 37
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 38,
+            "y": 44
+          }
+        },
+        {
+          "id": "D2",
+          "role": "DEFENDER",
+          "position": {
+            "x": 44,
+            "y": 38
+          }
+        },
+        {
+          "id": "D3",
+          "role": "DEFENDER",
+          "position": {
+            "x": 44,
+            "y": 50
+          }
+        },
+        {
+          "id": "D4",
+          "role": "DEFENDER",
+          "position": {
+            "x": 65,
+            "y": 46
+          }
+        },
+        {
+          "id": "D5",
+          "role": "DEFENDER",
+          "position": {
+            "x": 68,
+            "y": 38
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 26,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 38,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 50,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 26,
+            "y": 44
+          }
+        },
+        {
+          "position": {
+            "x": 50,
+            "y": 44
+          }
+        },
+        {
+          "position": {
+            "x": 26,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 38,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 50,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 68,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 80,
+            "y": 32
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 44
+          }
+        },
+        {
+          "position": {
+            "x": 80,
+            "y": 44
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 68,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 80,
+            "y": 56
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 38,
+            "y": 44
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A1",
+          "to_player": "A2"
+        }
+      ],
+      "coaching_points": [
+        "Maintain quick ball movement in 5v3 situations",
+        "Transition rapidly when possession changes",
+        "Communication is key during switches between grids",
+        "Keep high intensity throughout transitions"
+      ],
+      "variations": [
+        "Add touch restrictions (2-touch maximum)",
+        "Increase grid size to 15x15 yards for more space",
+        "Add neutral players who play with possession team",
+        "Time each possession phase to add pressure"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/5v3-switching-rondo",
+    "published_at": "2026-01-03T01:06:19.462719"
+  },
+  {
+    "id": "856384c8-3517-40aa-b75c-e291851d6084",
+    "name": "3-Man Box Passing Warmup",
+    "description": "3-Man Box Passing WarmupPassing warm-up, opening up, movement, first touch, awarenessImagePrintPASSING WARM-UP, OPENING UP, MOVEMENT, FIRST TOUCH, AWARENESSDrill Quick GlanceAge: 9+Field: 10X10Players: 3+Focus: PASSINGDifficulty: MediumTime: 10 mins.Goalkeeper: NOINDIVIDUALRating: 0 / 5Views: 9,879Published: 5/8/2025Author: Chris JohnsonDrill ObjectiveThis drill focuses on teaching players how to open up their body, scan the field, and play accurate passes while moving continuously. It helps rei",
+    "category": "Passing",
+    "age_group": "9+",
+    "player_count": "3+",
+    "duration": "10 mins.",
+    "difficulty": "Medium",
+    "has_goalkeeper": false,
+    "setup_text": "1. Field Size: 4x4 yard square created with cones or training sticks\n2. Players: 3 players per station\n1 worker inside the box\n2 passers positioned 7\u201310 yards away on adjacent sides of the box\n3. Equipment: 4 cones to create the box; optional colored cones for the variation",
+    "instructions_text": "1. One of the passers plays a ball into the worker inside the box.\n2. The worker must open up, take a touch, and pass to the other outside passer.\n3. After the pass, the worker sprints around one of the four cones that form the box.\n4. The second passer returns the ball to the worker, and the sequence repeats in the opposite direction.\n5. Continue the cycle for 30-60 seconds, then rotate roles so each player gets time as the worker.",
+    "variations_text": "\u2022 Color-Coded Cones: Use different colored cones at each corner; one of the passers calls out a color after each pass for the worker to move around.\n\u2022 One-Touch Passing: Advanced players can try one-touch play to increase difficulty.\n\u2022 Weak Foot Only: Require the worker to receive and pass only with their weaker foot.\n\u2022 Time Challenge: Count how many clean passes the group can complete in 60 seconds.\n\u2022 Two Workers: Add a second worker to increase intensity and decision-making.",
+    "coaching_points_text": "\u2022 Open Body Shape: Players should receive on the half-turn to play quickly.\n\u2022 First Touch Direction: Touch should set up with the back foot for a clean pass to the next passer.\n\u2022 Scanning and Awareness: Workers should keep their eyes up to locate both passers and anticipate instructions.\n\u2022 Quick, Quality Movement: Sprint with purpose while keeping eyes on the ball while traveling around cones, resetting quickly for the next touch.\n\u2022 Accurate Passing: Ensure each pass is played with proper weight and direction.",
+    "drill_json": {
+      "name": "3-Man Box Passing Warmup",
+      "description": "Technical passing drill with one player working inside a 4x4 yard box, receiving passes from two outside players and moving around cones between passes",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 51,
+            "y": 50
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 51,
+            "y": 38
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 60,
+            "y": 50
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 48,
+            "y": 48
+          }
+        },
+        {
+          "position": {
+            "x": 52,
+            "y": 48
+          }
+        },
+        {
+          "position": {
+            "x": 48,
+            "y": 52
+          }
+        },
+        {
+          "position": {
+            "x": 52,
+            "y": 52
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 42,
+            "y": 58
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A2",
+          "to_player": "A1"
+        },
+        {
+          "type": "PASS",
+          "from_player": "A1",
+          "to_player": "A3"
+        },
+        {
+          "type": "RUN",
+          "player": "A1",
+          "to_position": {
+            "x": 48,
+            "y": 54
+          }
+        },
+        {
+          "type": "RUN",
+          "player": "A1",
+          "to_position": {
+            "x": 46,
+            "y": 50
+          }
+        },
+        {
+          "type": "RUN",
+          "player": "A1",
+          "to_position": {
+            "x": 51,
+            "y": 50
+          }
+        }
+      ],
+      "coaching_points": [
+        "Worker should open up body to see both passers",
+        "Take touch away from pressure to create passing angle",
+        "Sprint around cone after each pass to maintain intensity",
+        "Outside passers should provide accurate passes to worker's feet"
+      ],
+      "variations": [
+        "Use colored cones for specific running patterns",
+        "Add time pressure - count successful passes in 60 seconds",
+        "Worker must use only one touch",
+        "Add a fourth player as passive defender"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/3-man-box-passing-warmup",
+    "published_at": "2026-01-03T01:06:23.152297"
+  },
+  {
+    "id": "d47e5290-1fd2-4ac4-b185-e9510de8cbc1",
+    "name": "6v1 Overload Add Defenders Drill",
+    "description": "6v1 Overload Add Defenders Drilloverload training soccer, progressive possession drill, add defenders rondo, transitional defense drillImagePrintOVERLOAD TRAINING SOCCER, PROGRESSIVE POSSESSION DRILL, ADD DEFENDERS RONDO, TRANSITIONAL DEFENSE DRILLDrill Quick GlanceAge: 13+Field: 20X25Players: 12+Focus: POSSESSIONDifficulty: MEDIUMTime: 20 mins.Goalkeeper: NOTEAMRating: 0 / 5Views: 1,328Published: 10/10/2025Author: Chris JohnsonDrill ObjectiveThis drill builds players' ability to think quickly a",
+    "category": "Possession",
+    "age_group": "13+",
+    "player_count": "12+",
+    "duration": "20 mins.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": false,
+    "setup_text": "\u2022 Create a square or rectangular grid using cones, sized 20x20 yards for younger players or 30x30 yards for older players\n\u2022 Place one defender in the grid to start\n\u2022 Position six attackers inside the grid with one player starting with the ball\n\u2022 Keep the remaining players outside the area ready to enter as additional defenders\n\u2022 Have extra balls nearby to restart play quickly when needed",
+    "instructions_text": "1. The attacking team begins play by passing and moving to keep possession away from the single defender\n2. Attackers try to complete as many consecutive passes as possible\n3. Add a new defender when the attackers reach a set number of passes, such as 5 or 10 consecutive completions\n4. When possession changes, the attacking team starts their pass count from zero\n5. Continue adding defenders each time the pass target is reached\n6. The drill progresses from 6v1 to 6v2, then 6v3, and continues until a set time limit or number of defenders is reached\n7. Reset the drill or rotate players after reaching the predetermined endpoint",
+    "variations_text": "\u2022 Limit attackers to two touches or one touch only to increase speed and sharpness\n\u2022 Award points to defenders if they force the ball out of bounds to increase their motivation\n\u2022 Require attackers to complete a minimum number of passes before they can score through a mini-goal\n\u2022 Create zones where the ball must enter before a pass counts toward the total\n\u2022 Add a rule where attackers must use both feet or alternate which foot they use\n\u2022 Place restrictions on where defenders can position themselves initially to give attackers time to settle\n\u2022 Make defenders do a physical challenge like five pushups before entering the grid\n\u2022 Track which group of attackers can complete the most passes before losing possession",
+    "coaching_points_text": "\u2022 Attackers need to scan constantly to find open teammates and identify where space exists\n\u2022 Communication is essential as pressure builds. Simple calls help teammates know support is available\n\u2022 First touch must move the ball away from pressure and into space where the next pass opens up\n\u2022 Players without the ball should make sharp runs at angles to create clear passing lanes\n\u2022 As more defenders enter, attackers must spread wider to stretch the defense\n\u2022 The closest defender to the ball should apply immediate pressure to limit time and space\n\u2022 Defenders must stay patient and avoid diving in, which creates gaps for attackers to exploit\n\u2022 Defensive players should work together to cut off passing options and force mistakes\n\u2022 Watch for the transition moment when the ball turns over. Instant pressure or instant support makes the difference\n\u2022 Players switching from attack to defense need to recover quickly with their head up looking for the ball",
+    "drill_json": {
+      "name": "6v1 Overload Add Defenders Drill",
+      "description": "Progressive possession drill starting with 6 attackers vs 1 defender. Additional defenders are added each time attackers reach target consecutive passes (5-10). Develops possession under increasing pressure.",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 45,
+            "y": 45
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 55,
+            "y": 47
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 42,
+            "y": 52
+          }
+        },
+        {
+          "id": "A4",
+          "role": "ATTACKER",
+          "position": {
+            "x": 58,
+            "y": 53
+          }
+        },
+        {
+          "id": "A5",
+          "role": "ATTACKER",
+          "position": {
+            "x": 47,
+            "y": 57
+          }
+        },
+        {
+          "id": "A6",
+          "role": "ATTACKER",
+          "position": {
+            "x": 53,
+            "y": 55
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 50,
+            "y": 50
+          }
+        },
+        {
+          "id": "D2",
+          "role": "DEFENDER",
+          "position": {
+            "x": 65,
+            "y": 45
+          }
+        },
+        {
+          "id": "D3",
+          "role": "DEFENDER",
+          "position": {
+            "x": 65,
+            "y": 50
+          }
+        },
+        {
+          "id": "D4",
+          "role": "DEFENDER",
+          "position": {
+            "x": 65,
+            "y": 55
+          }
+        },
+        {
+          "id": "D5",
+          "role": "DEFENDER",
+          "position": {
+            "x": 70,
+            "y": 47
+          }
+        },
+        {
+          "id": "D6",
+          "role": "DEFENDER",
+          "position": {
+            "x": 70,
+            "y": 53
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 40,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 60,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 40,
+            "y": 60
+          }
+        },
+        {
+          "position": {
+            "x": 60,
+            "y": 60
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 45,
+            "y": 45
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A1",
+          "to_player": "A2"
+        },
+        {
+          "type": "PASS",
+          "from_player": "A2",
+          "to_player": "A6"
+        },
+        {
+          "type": "RUN",
+          "player": "D2",
+          "to_position": {
+            "x": 58,
+            "y": 48
+          }
+        }
+      ],
+      "coaching_points": [
+        "Keep your head up to see all passing options",
+        "Move the ball quickly before defenders can close down",
+        "Create space by moving away from teammates",
+        "Use the entire grid space - don't bunch up in center",
+        "Support the player with the ball with multiple passing angles"
+      ],
+      "variations": [
+        "Start with different attacker to defender ratios (5v1, 7v1)",
+        "Change the pass target before adding defenders (3, 8, 12 passes)",
+        "Add time pressure - must make decision within 3 seconds",
+        "Require minimum 2 touches or maximum 3 touches per player",
+        "Add condition that ball must be played to each attacker before counting passes"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/6v1-overload-add-defenders-drill",
+    "published_at": "2026-01-03T01:06:27.335549"
+  },
+  {
+    "id": "b34808ef-9a84-4c49-beb6-209ae01a74d1",
+    "name": "4v4+2 Endzone Possession Game",
+    "description": "4v4+2 Endzone Possession Gamepossession drill soccer, rondo progression drill, endzone passing game, youth soccer possession trainingImagePrintPOSSESSION DRILL SOCCER, RONDO PROGRESSION DRILL, ENDZONE PASSING GAME, YOUTH SOCCER POSSESSION TRAININGDrill Quick GlanceAge: 10+Field: 12x20Players: 12+Focus: POSSESSIONDifficulty: MEDIUMTime: 20 MINS.Goalkeeper: NOTeamRating: 0 / 5Views: 991Published: 10/8/2025Author: Chris JohnsonDrill ObjectiveThis drill develops players' ability to keep possession u",
+    "category": "Possession",
+    "age_group": "10+",
+    "player_count": "12+",
+    "duration": "20 MINS.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": false,
+    "setup_text": "\u2022 Create a 12x20 yard grid using cones\n\u2022 Mark two endzones that are 3x12 yards on each end of the grid\n\u2022 Divide your team into two groups of six players each, plus select two neutral players\n\u2022 Place four players from each team in the central playing area\n\u2022 Position one player from each team in each endzone\n\u2022 Station the two neutral players outside the long sides of the grid\n\u2022 Keep a supply of balls near the coach to restart play quickly",
+    "instructions_text": "1. Start the game with one team in possession in the center grid\n2. The team with the ball plays 4v4 in the middle, using the two neutral outside players as passing options\n3. Players can pass to their teammate in the endzone to help maintain possession\n4. The endzone player must move to find open space and good angles to receive\n5. When an endzone player receives the ball, they can dribble out of the zone to join the game\n6. If the endzone player dribbles out, they switch positions with the player who passed them the ball\n7. Exception: if a neutral player passes to the endzone, no position switch happens and the ball must be passed back out\n8. When the other team wins the ball, they immediately try to keep possession and use their endzone player\n9. Start as a simple rondo with no scoring to let players learn the pattern\n10. Progress to scoring one point for completing a set number of consecutive passes\n11. Next progression: score one point for passing to the endzone and keeping possession\n12. Final progression: score one point for passing to one endzone, keeping the ball, then passing to the opposite endzone",
+    "variations_text": "\u2022 Limit touches in the middle to two or one touch to increase the speed of play\n\u2022 Remove the neutral players to make it a true 4v4 and increase defensive pressure\n\u2022 Add a rule that the endzone player must receive the ball before the team can score\n\u2022 Make it directional where teams can only score in one specific endzone\n\u2022 Require the ball to touch the endzone player twice before a point counts\n\u2022 Change the number of passes needed for a point based on your team's skill level\n\u2022 Allow the defending team to send one player into the endzone to pressure\n\u2022 Give bonus points for one-touch passes to or from the endzone player\n\u2022 Shrink the grid size to increase pressure and speed up decision-making",
+    "coaching_points_text": "\u2022 Players need to scan before receiving the ball to know where pressure is coming from and where space exists\n\u2022 First touch should move the ball into space away from defenders, not just stop it\n\u2022 The endzone player can't stand still - they must move side to side to create passing angles\n\u2022 Players in the middle should constantly check their shoulders to stay aware of all options\n\u2022 Speed of play matters - one or two touch passing breaks down the defense faster than holding the ball\n\u2022 Body shape when receiving is key - open up to see the whole field\n\u2022 Players off the ball need to move into passing lanes and create triangles of support\n\u2022 Communication helps - call for the ball when you're open but keep it simple and clear\n\u2022 When defending, work together to press as a unit and cut off passing lanes\n\u2022 The neutral players should move up and down their line to stay available at the right angle",
+    "drill_json": {
+      "name": "4v4+2 Endzone Possession Game",
+      "description": "A possession drill with two teams of 4 playing in the center, supported by 2 neutral players and endzone teammates. Teams maintain possession and can switch positions when passing to endzones.",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 45,
+            "y": 52
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 51,
+            "y": 60
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 52,
+            "y": 54
+          }
+        },
+        {
+          "id": "A4",
+          "role": "ATTACKER",
+          "position": {
+            "x": 55,
+            "y": 48
+          }
+        },
+        {
+          "id": "A5",
+          "role": "ATTACKER",
+          "position": {
+            "x": 53,
+            "y": 41
+          }
+        },
+        {
+          "id": "A6",
+          "role": "ATTACKER",
+          "position": {
+            "x": 47,
+            "y": 68
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 47,
+            "y": 50
+          }
+        },
+        {
+          "id": "D2",
+          "role": "DEFENDER",
+          "position": {
+            "x": 53,
+            "y": 56
+          }
+        },
+        {
+          "id": "D3",
+          "role": "DEFENDER",
+          "position": {
+            "x": 51,
+            "y": 52
+          }
+        },
+        {
+          "id": "D4",
+          "role": "DEFENDER",
+          "position": {
+            "x": 49,
+            "y": 46
+          }
+        },
+        {
+          "id": "D5",
+          "role": "DEFENDER",
+          "position": {
+            "x": 53,
+            "y": 69
+          }
+        },
+        {
+          "id": "D6",
+          "role": "DEFENDER",
+          "position": {
+            "x": 48,
+            "y": 41
+          }
+        },
+        {
+          "id": "N1",
+          "role": "NEUTRAL",
+          "position": {
+            "x": 42,
+            "y": 55
+          }
+        },
+        {
+          "id": "N2",
+          "role": "NEUTRAL",
+          "position": {
+            "x": 58,
+            "y": 55
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 44,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 40
+          }
+        },
+        {
+          "position": {
+            "x": 44,
+            "y": 70
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 70
+          }
+        },
+        {
+          "position": {
+            "x": 44,
+            "y": 43
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 43
+          }
+        },
+        {
+          "position": {
+            "x": 44,
+            "y": 67
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 67
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 45,
+            "y": 52
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A1",
+          "to_player": "A2"
+        },
+        {
+          "type": "PASS",
+          "from_player": "A2",
+          "to_player": "A6"
+        },
+        {
+          "type": "DRIBBLE",
+          "player": "A6",
+          "to_position": {
+            "x": 47,
+            "y": 60
+          }
+        },
+        {
+          "type": "RUN",
+          "player": "A2",
+          "to_position": {
+            "x": 50,
+            "y": 68
+          }
+        }
+      ],
+      "coaching_points": [
+        "Endzone players must move to create good passing angles",
+        "When passing to endzone, be ready to switch positions if they dribble out",
+        "Use neutral players to maintain possession under pressure",
+        "Quick ball movement to find the open endzone player"
+      ],
+      "variations": [
+        "Start as simple rondo with no scoring",
+        "Score points for consecutive passes",
+        "Score for passing to endzone and keeping possession",
+        "Score for passing to both endzones in sequence"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/endzone-possession-game",
+    "published_at": "2026-01-03T01:06:32.483660"
+  },
+  {
+    "id": "101401ed-46ae-4e05-8f71-87e16ea81239",
+    "name": "1v1 Corner Escape",
+    "description": "1v1 Corner Escape1v1 escape, tight space dribbling, pressure, decision-making, first touchImagePrint1V1 ESCAPE, TIGHT SPACE DRIBBLING, PRESSURE, DECISION-MAKING, FIRST TOUCHDrill Quick GlanceAge: 9+Field: 6X6Players: 4+Focus: ATTACKINGDifficulty: MEDIUMTime: 10 mins.Goalkeeper: NOINDIVIDUALRating: 0 / 5Views: 13,945Published: 4/1/2025Author: Chris JohnsonDrill ObjectiveThis drill sharpens a player\u2019s ability to receive under pressure, recognize defensive cues, and dribble into space. It emphasize",
+    "category": "Dribbling",
+    "age_group": "9+",
+    "player_count": "4+",
+    "duration": "10 mins.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": false,
+    "setup_text": "1. Field Size: 6x6 yard grid\n2. Gates: Three 1-yard gates on three sides of the corner grid\nThe middle gate is placed diagonally, facing the opposite cone\n3. Players: 4 players per grid\n4. 3 players with balls at the diagonal gate\n5. 1 player without a ball at the opposite cone",
+    "instructions_text": "1. One of the players with a ball passes to the player on the opposite cone, who must receive the ball in the corner of the grid.\n2. Immediately after the pass, the passer becomes the defender and applies pressure.\n3. The receiving player must attempt to dribble through one of the three gates to escape the corner.\n4. A point is scored only if the ball is dribbled through a gate (no points for passing through).\n5. The receiver must read the pressure and decide whether to take a close control touch or a larger touch to escape around the defender.\n6. Rotate roles so all players have a chance to attack and defend.",
+    "variations_text": "\u2022 Touch Limit: Allow only two touches to escape for added challenge.\n\u2022 Defender Delay: Defender must count to 1 before applying pressure to simulate real timing.\n\u2022 Smaller Gates: Narrow the gates to demand more precise control and execution.\n\u2022 Left/Right Only Rounds: Restrict dribbling escape to specific gates to work on directional skills.\n\u2022 Add a Timer: Players must escape within 5 seconds to encourage quick decision-making.",
+    "coaching_points_text": "\u2022 First Touch Awareness: Encourage players to take touches based on the pressure \u2014 small if unpressured, big if defender is tight.\n\u2022 Read the Defender: Attackers must scan quickly and choose the right gate to escape through.\n\u2022 Body Positioning: Receive the ball on the half-turn to see both the field and the defender.\n\u2022 Defensive Pressure: Defenders should close down quickly and angle their approach to limit escape options.\n\u2022 Acceleration: Once an escape route is chosen, explode into space with speed.",
+    "drill_json": {
+      "name": "1v1 Corner Escape",
+      "description": "A 1v1 drill where players must escape from a corner grid through one of three gates while under pressure from a defender",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50.5,
+            "y": 50.5
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 55,
+            "y": 55
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 50,
+            "y": 50
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 50
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 51
+          }
+        },
+        {
+          "position": {
+            "x": 50,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 51,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 55,
+            "y": 56
+          }
+        },
+        {
+          "position": {
+            "x": 56,
+            "y": 55
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 47,
+            "y": 53
+          }
+        },
+        {
+          "position": {
+            "x": 47,
+            "y": 47
+          }
+        },
+        {
+          "position": {
+            "x": 47,
+            "y": 49
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "D1",
+          "to_player": "A1"
+        },
+        {
+          "type": "RUN",
+          "player": "D1",
+          "to_position": {
+            "x": 50,
+            "y": 51
+          }
+        },
+        {
+          "type": "DRIBBLE",
+          "player": "A1",
+          "to_position": {
+            "x": 50.5,
+            "y": 56
+          }
+        }
+      ],
+      "coaching_points": [
+        "Receive with back to goal and assess pressure immediately",
+        "Use close control touch when defender is close, larger touch when space is available",
+        "Keep body between ball and defender while escaping",
+        "Defender should apply immediate pressure after passing"
+      ],
+      "variations": [
+        "Add time limit for escape (5-8 seconds)",
+        "Increase grid size to 8x8 or 10x10 yards",
+        "Add a fourth gate for more escape options",
+        "Require specific foot or move to go through each gate"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/1v1-escape-the-corner",
+    "published_at": "2026-01-03T01:06:37.920371"
+  },
+  {
+    "id": "65b863da-a204-4dc4-a2cf-3a5c36677676",
+    "name": "3v1 Rondo",
+    "description": "3v1 Rondo3v1 rondo drill, basic possession drill soccer, youth rondo training, small sided possession gameImagePrint3V1 RONDO DRILL, BASIC POSSESSION DRILL SOCCER, YOUTH RONDO TRAINING, SMALL SIDED POSSESSION GAMEDrill Quick GlanceAge: 9+Field: 5X5Players: 4+Focus: POSSESSIONDifficulty: EASYTime: 10 MINS.Goalkeeper: NOTEAMRating: 0 / 5Views: 1,238Published: 10/9/2025Author: Chris JohnsonDrill ObjectiveThis drill builds the foundation of possession soccer by teaching players how to keep the ball ",
+    "category": "Possession",
+    "age_group": "9+",
+    "player_count": "4+",
+    "duration": "10 MINS.",
+    "difficulty": "EASY",
+    "has_goalkeeper": false,
+    "setup_text": "\u2022 Create a 5x5 yard grid with cones\n\u2022 Assign four players to each grid\n\u2022 Designate one player as the starting defender\n\u2022 The other three players position themselves around the grid as attackers\n\u2022 Each grid needs one ball to start\n\u2022 Set up multiple grids if you have more than four players to maximize touches",
+    "instructions_text": "1. The three attacking players start with possession and work to keep the ball away from the defender\n2. All attacking players are limited to two touches maximum\n3. Players pass and move constantly to create passing angles\n4. The defender pressures the ball and works to win possession or force the ball out of bounds\n5. If the defender wins the ball, the player who lost it becomes the new defender\n6. If an attacker passes the ball out of bounds, that player becomes the defender\n7. Play continues with the new defender immediately pressing\n8. Keep the tempo high with quick restarts after each turnover\n9. Rotate through multiple rounds so everyone experiences defending",
+    "variations_text": "\u2022 Shrink the grid to 4x4 yards for advanced players to increase difficulty\n\u2022 Expand to 10x10 yards for beginners who need more time and space\n\u2022 Limit players to one touch to speed up play dramatically\n\u2022 Allow unlimited touches for younger players still learning the pattern\n\u2022 Add a second defender to make it 3v2 and increase pressure\n\u2022 Award points for completing a certain number of consecutive passes\n\u2022 Require the ball to go through all three attackers before counting toward a pass total\n\u2022 Make attackers use only their weak foot\n\u2022 Allow the defender to win by forcing five turnovers, then rotate to a new defender\n\u2022 Create a rule where players must move after every pass they make",
+    "coaching_points_text": "\u2022 Attackers should form a triangle shape around the defender to create the best passing angles\n\u2022 Movement without the ball is just as important as the pass itself\n\u2022 Players need to open their body when receiving so they can see both the ball and their next passing option\n\u2022 Use the back foot to receive passes when possible because it opens up more of the field\n\u2022 Look at one teammate but pass to another to deceive the defender\n\u2022 Passes should be firm and accurate to feet, not soft or behind the receiver\n\u2022 The first touch should set up the second touch, not just stop the ball\n\u2022 Players should constantly adjust their distance from each other based on where the defender is\n\u2022 Quick feet and body feints help sell a fake pass or movement\n\u2022 The defender should pressure intelligently and try to force passes into predictable areas\n\u2022 Communication helps but keep it simple and quick",
+    "drill_json": {
+      "name": "3v1 Rondo",
+      "description": "Three attacking players work to keep possession away from one defender in a small grid using quick passing and movement with a two-touch limit.",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 48.5,
+            "y": 48
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 52,
+            "y": 49
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50,
+            "y": 52
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 50,
+            "y": 50
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 47.5,
+            "y": 47.5
+          }
+        },
+        {
+          "position": {
+            "x": 52.5,
+            "y": 47.5
+          }
+        },
+        {
+          "position": {
+            "x": 47.5,
+            "y": 52.5
+          }
+        },
+        {
+          "position": {
+            "x": 52.5,
+            "y": 52.5
+          }
+        }
+      ],
+      "cone_gates": [],
+      "balls": [
+        {
+          "position": {
+            "x": 47,
+            "y": 47
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A1",
+          "to_player": "A2"
+        }
+      ],
+      "coaching_points": [
+        "Maximum two touches per player",
+        "Keep passing angles open with constant movement",
+        "Quick decision making under pressure",
+        "Defender applies immediate pressure to ball carrier",
+        "Player who loses possession becomes new defender"
+      ],
+      "variations": [
+        "Increase grid size to 8x8 yards for more space",
+        "Add one-touch passing requirement",
+        "Include specific number of passes before switching roles",
+        "Add neutral player who always plays with possession team"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/3v1-rondo-drill",
+    "published_at": "2026-01-03T01:06:42.370237"
+  },
+  {
+    "id": "670b1106-432e-4668-b7a9-e4f35c03adc2",
+    "name": "11v5 Positional Rondo",
+    "description": "11v5 Positional Rondopositional rondo drill, 11v5 possession training, shape and possession drill, tactical rondo soccerImagePrintPOSITIONAL RONDO DRILL, 11V5 POSSESSION TRAINING, SHAPE AND POSSESSION DRILL, TACTICAL RONDO SOCCERDrill Quick GlanceAge: 13+Field: 20X25Players: 16+Focus: Game-likeDifficulty: MEDIUMTime: 20 mins.Goalkeeper: YESTEAMRating: 0 / 5Views: 1,093Published: 10/9/2025Author: Chris JohnsonDrill ObjectiveThis drill teaches your full team to keep possession while maintaining po",
+    "category": "Possession",
+    "age_group": "13+",
+    "player_count": "16+",
+    "duration": "20 mins.",
+    "difficulty": "MEDIUM",
+    "has_goalkeeper": true,
+    "setup_text": "\u2022 Set up a 20x25 yard grid using cones\n\u2022 Place two small goals on one end of the grid for the defending team to attack\n\u2022 Divide your squad into a team of 11 and a team of 5, each wearing different colored jerseys\n\u2022 Position the team of 11 in their actual game formation inside the grid\n\u2022 Place the five defenders anywhere inside the grid to start\n\u2022 Have plenty of balls ready near the coach to restart play quickly",
+    "instructions_text": "1. The team of 11 starts with possession and works to keep the ball while staying in their assigned positions\n2. Each player must remain in their positional area throughout the drill\n3. Players pass and move within their zone to create angles and maintain possession\n4. The five defenders press and work together to win the ball\n5. Award the team of 11 one point after they complete a set number of consecutive passes\n6. If the defending team wins possession, they immediately attack the two small goals\n7. The team of 11 transitions to defense and tries to stop the counterattack\n8. After a goal or the ball goes out, restart with the team of 11 in possession\n9. Rotate defenders every few minutes so different players experience the high intensity defensive work\n10. Keep the tempo high and competitive throughout",
+    "variations_text": "\u2022 Shrink the grid to 15x20 yards for advanced teams to increase pressure\n\u2022 Expand to 25x30 yards for younger or less experienced players\n\u2022 Limit the team of 11 to two touches to speed up decision making\n\u2022 Add a sixth or seventh defender to increase difficulty\n\u2022 Require the ball to go through specific positions before a point counts\n\u2022 Award bonus points for completing passes through certain zones like the middle third\n\u2022 Make the team of 11 complete a set passing pattern before earning points\n\u2022 Allow defenders to score double points on goals to increase their motivation\n\u2022 Create zones where only certain positions can receive the ball\n\u2022 Time each possession phase and track how long the team of 11 can keep the ball\n\u2022 Switch to one-touch passing in certain areas of the grid",
+    "coaching_points_text": "\u2022 Players must understand their position's responsibilities and stay disciplined in their area\n\u2022 Spacing is critical - players too close together makes defending easier\n\u2022 The ball should move faster than the defenders can press\n\u2022 Players need to check their shoulders constantly to know where pressure is coming from\n\u2022 Support angles should form triangles so the player with the ball always has two passing options\n\u2022 First touch should be clean and move the ball into space, not back toward pressure\n\u2022 Defenders must communicate and work as a unit to cut off passing lanes\n\u2022 When the ball switches sides, players on the far side need to adjust their position\n\u2022 The team of 11 should stay composed when pressed - no panic passes\n\u2022 After losing the ball, the nearest players must pressure immediately to slow the counterattack\n\u2022 Look for players scanning before receiving - this habit needs to become automatic",
+    "drill_json": {
+      "name": "11v5 Positional Rondo",
+      "description": "A possession drill where 11 players in formation maintain possession against 5 defenders, with quick transition to attack small goals when defenders win the ball",
+      "field": {
+        "type": "FULL",
+        "attacking_direction": "NORTH",
+        "markings": false,
+        "goals": 0
+      },
+      "players": [
+        {
+          "id": "GK",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50,
+            "y": 38
+          }
+        },
+        {
+          "id": "A1",
+          "role": "ATTACKER",
+          "position": {
+            "x": 33,
+            "y": 46
+          }
+        },
+        {
+          "id": "A2",
+          "role": "ATTACKER",
+          "position": {
+            "x": 67,
+            "y": 46
+          }
+        },
+        {
+          "id": "A3",
+          "role": "ATTACKER",
+          "position": {
+            "x": 43,
+            "y": 43
+          }
+        },
+        {
+          "id": "A4",
+          "role": "ATTACKER",
+          "position": {
+            "x": 57,
+            "y": 43
+          }
+        },
+        {
+          "id": "A5",
+          "role": "ATTACKER",
+          "position": {
+            "x": 30,
+            "y": 53
+          }
+        },
+        {
+          "id": "A6",
+          "role": "ATTACKER",
+          "position": {
+            "x": 70,
+            "y": 53
+          }
+        },
+        {
+          "id": "A7",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50,
+            "y": 49
+          }
+        },
+        {
+          "id": "A8",
+          "role": "ATTACKER",
+          "position": {
+            "x": 40,
+            "y": 58
+          }
+        },
+        {
+          "id": "A9",
+          "role": "ATTACKER",
+          "position": {
+            "x": 60,
+            "y": 58
+          }
+        },
+        {
+          "id": "A10",
+          "role": "ATTACKER",
+          "position": {
+            "x": 50,
+            "y": 62
+          }
+        },
+        {
+          "id": "D1",
+          "role": "DEFENDER",
+          "position": {
+            "x": 45,
+            "y": 48
+          }
+        },
+        {
+          "id": "D2",
+          "role": "DEFENDER",
+          "position": {
+            "x": 55,
+            "y": 52
+          }
+        },
+        {
+          "id": "D3",
+          "role": "DEFENDER",
+          "position": {
+            "x": 37,
+            "y": 57
+          }
+        },
+        {
+          "id": "D4",
+          "role": "DEFENDER",
+          "position": {
+            "x": 62,
+            "y": 57
+          }
+        },
+        {
+          "id": "D5",
+          "role": "DEFENDER",
+          "position": {
+            "x": 50,
+            "y": 55
+          }
+        }
+      ],
+      "cones": [
+        {
+          "position": {
+            "x": 25,
+            "y": 38
+          }
+        },
+        {
+          "position": {
+            "x": 75,
+            "y": 38
+          }
+        },
+        {
+          "position": {
+            "x": 25,
+            "y": 63
+          }
+        },
+        {
+          "position": {
+            "x": 75,
+            "y": 63
+          }
+        }
+      ],
+      "cone_gates": [
+        {
+          "id": "G1",
+          "center": {
+            "x": 40,
+            "y": 38
+          },
+          "width": 4,
+          "orientation": "HORIZONTAL"
+        },
+        {
+          "id": "G2",
+          "center": {
+            "x": 60,
+            "y": 38
+          },
+          "width": 4,
+          "orientation": "HORIZONTAL"
+        }
+      ],
+      "balls": [
+        {
+          "position": {
+            "x": 50,
+            "y": 50
+          }
+        }
+      ],
+      "mannequins": [],
+      "actions": [
+        {
+          "type": "PASS",
+          "from_player": "A3",
+          "to_player": "A1"
+        }
+      ],
+      "coaching_points": [
+        "Players must stay in their positional zones throughout the drill",
+        "Quick passing and movement within zones to create passing angles",
+        "Defenders work together with high intensity pressing",
+        "Immediate transition when possession changes hands",
+        "Keep tempo high and competitive"
+      ],
+      "variations": [
+        "Change the number of consecutive passes required for a point",
+        "Adjust grid size to make it easier or harder",
+        "Add time limits for possession phases",
+        "Use different formations for the team of 11"
+      ]
+    },
+    "source": "soccerxpert.com",
+    "source_url": "https://soccerxpert.com/drills/details/11v5-positional-rondo",
+    "published_at": "2026-01-03T01:06:46.365105"
+  }
+]
