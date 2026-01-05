@@ -971,7 +971,7 @@ Remember: The diagram and description will be shown side by side. They MUST matc
 
 def get_reference_drills(category: Optional[str], num_examples: int = 2) -> List[Dict]:
     """
-    Get random reference drills from the library for a given category.
+    Get reference drills - first try curated gold standards, then fall back to library.
     
     Args:
         category: Drill category (e.g., "Finishing", "Possession")
@@ -980,6 +980,14 @@ def get_reference_drills(category: Optional[str], num_examples: int = 2) -> List
     Returns:
         List of drill dictionaries with setup, instructions, and drill_json
     """
+    # First, check if we have curated examples for this category
+    curated = CURATED_EXAMPLES.get(category.lower() if category else '', [])
+    
+    if curated:
+        # Use curated examples (they're already high quality)
+        return curated[:num_examples]
+    
+    # Fall back to library
     library = load_library()
     
     if not library:
@@ -987,93 +995,354 @@ def get_reference_drills(category: Optional[str], num_examples: int = 2) -> List
     
     # Filter by category if specified
     if category:
-        # Normalize category for matching
         category_lower = category.lower().strip()
         matching = [
             d for d in library 
             if d.get('category', '').lower().strip() == category_lower
             or category_lower in d.get('category', '').lower()
         ]
-        
-        # If no exact match, try partial matching on drill type keywords
-        if not matching:
-            category_keywords = {
-                'finishing': ['finishing', 'shooting', 'shot', 'goal'],
-                'possession': ['possession', 'rondo', 'keep away', 'passing'],
-                'passing': ['passing', 'pass', 'combination'],
-                'dribbling': ['dribbling', 'dribble', '1v1', 'skills'],
-                'defending': ['defending', 'defensive', 'pressure', 'tackle'],
-                'crossing': ['crossing', 'cross', 'wing'],
-                'conditioning': ['conditioning', 'fitness', 'endurance'],
-                'warm up': ['warm up', 'warmup', 'activation'],
-                'small sided': ['small sided', 'ssg', 'game', 'scrimmage'],
-            }
-            
-            keywords = category_keywords.get(category_lower, [category_lower])
-            matching = [
-                d for d in library
-                if any(kw in d.get('name', '').lower() or kw in d.get('category', '').lower() 
-                       for kw in keywords)
-            ]
     else:
         matching = library
     
-    # If still no matches, return random drills from full library
     if not matching:
         matching = library
     
-    # Randomly select up to num_examples drills
+    # Randomly select
     num_to_select = min(num_examples, len(matching))
-    selected = random.sample(matching, num_to_select)
+    selected = random.sample(matching, num_to_select) if matching else []
     
     return selected
 
 
 def format_reference_drills_for_prompt(drills: List[Dict]) -> str:
-    """Format reference drills for inclusion in the Claude prompt"""
+    """Format reference drills for inclusion in the Claude prompt - FULL details"""
     if not drills:
         return ""
     
-    sections = ["\n\n## REFERENCE DRILLS FROM LIBRARY"]
-    sections.append("Study these real drills for inspiration. Create something NEW but use similar quality and structure.")
-    sections.append("Pay special attention to the drill_json structure - your output should follow the same patterns.\n")
+    sections = ["\n\n## REFERENCE DRILLS - STUDY THESE CAREFULLY"]
+    sections.append("These are high-quality example drills. Your drill MUST match this level of quality.")
+    sections.append("CRITICAL: Study how the drill_json EXACTLY matches the setup and instructions.\n")
     
     for i, drill in enumerate(drills, 1):
-        sections.append(f"### Reference Drill {i}: {drill.get('name', 'Unnamed')}")
+        sections.append(f"### Example {i}: {drill.get('name', 'Unnamed')}")
         sections.append(f"**Category:** {drill.get('category', 'General')}")
         
-        if drill.get('setup') or drill.get('setup_text'):
-            setup = drill.get('setup') or drill.get('setup_text', '')
-            sections.append(f"\n**Setup:**\n{setup[:500]}...")  # Truncate if very long
+        # Include FULL setup - don't truncate
+        setup = drill.get('setup') or drill.get('setup_text', '')
+        if setup:
+            sections.append(f"\n**Setup:**\n{setup}")
         
-        if drill.get('instructions') or drill.get('instructions_text'):
-            instructions = drill.get('instructions') or drill.get('instructions_text', '')
-            sections.append(f"\n**Instructions:**\n{instructions[:500]}...")
+        # Include FULL instructions
+        instructions = drill.get('instructions') or drill.get('instructions_text', '')
+        if instructions:
+            sections.append(f"\n**Instructions:**\n{instructions}")
         
-        # Include the drill_json - this is crucial for diagram quality
+        # Include coaching points - these explain WHY
+        coaching = drill.get('coaching_points') or drill.get('coaching_points_text', '')
+        if coaching:
+            sections.append(f"\n**Coaching Points:**\n{coaching}")
+        
+        # Include FULL drill_json - this is the most important part
         if drill.get('drill_json'):
-            drill_json = drill['drill_json']
-            sections.append(f"\n**Diagram JSON (use similar structure):**")
+            sections.append(f"\n**DIAGRAM JSON (your output must follow this structure exactly):**")
             sections.append("```json")
-            
-            # Format key parts of the drill_json
-            formatted_json = {
-                "field": drill_json.get('field', {}),
-                "players": drill_json.get('players', []),
-                "cones": drill_json.get('cones', [])[:4],  # Limit to first 4 cones
-                "actions": drill_json.get('actions', []),
-                "balls": drill_json.get('balls', [])
-            }
-            sections.append(json.dumps(formatted_json, indent=2))
+            sections.append(json.dumps(drill['drill_json'], indent=2))
             sections.append("```")
         
-        sections.append("")  # Blank line between drills
+        sections.append("\n---\n")
     
-    sections.append("---")
-    sections.append("Now create a NEW drill inspired by these examples but tailored to the user's specific requirements.")
-    sections.append("Your drill should be ORIGINAL - do not copy directly, but learn from the structure and quality.\n")
+    sections.append("## YOUR TASK")
+    sections.append("Create a NEW, ORIGINAL drill that:")
+    sections.append("1. Matches the user's requirements (players, equipment, etc.)")
+    sections.append("2. Has the same quality level as the examples above")
+    sections.append("3. Has a drill_json where EVERY action matches the written instructions")
+    sections.append("4. Uses realistic player positions and movements")
+    sections.append("")
     
     return "\n".join(sections)
+
+
+# ============================================================
+# CURATED GOLD STANDARD EXAMPLES
+# ============================================================
+# These are manually selected high-quality drills that serve as
+# the primary reference for AI generation. Add more as you approve them.
+
+CURATED_EXAMPLES = {
+    "possession": [
+        {
+            "name": "5v3v1 Rondo Possession Drill",
+            "category": "Possession",
+            "setup": """• Mark out a 20x20 yard grid with cones
+• Divide players into one team of five and one team of three, each wearing different colored jerseys
+• From the team of five, position four players around the outside of the grid and one player inside
+• Place all three players from the team of three inside the grid
+• Have extra balls nearby to keep the drill moving
+• For teams with 16 or more players, set up two separate grids running simultaneously""",
+            "instructions": """1. Start with the team of three keeping possession against the single defender in a 3v1 rondo inside the grid
+2. The three attackers pass and move to maintain possession while the lone defender pressures
+3. When the single defender wins the ball, they immediately pass to any outside player
+4. Once the ball reaches an outside player, the game becomes a 5v3 rondo with four outside players and one inside player keeping possession
+5. The team of three now defends and tries to win the ball back
+6. As the single player passes to the outside, they switch roles with one of the three defenders who becomes the new single attacker
+7. The four outside players stay outside and work the ball around the perimeter while using the inside player
+8. If the team of three wins possession back, play immediately switches to a 3v1 rondo again inside the grid
+9. Continue this back and forth pattern as possession changes hands
+10. Keep score by awarding points for completing a set number of consecutive passes""",
+            "coaching_points": """• The transition moment is critical - players must switch their mindset from attack to defense instantly
+• Inside attackers should constantly move to create passing angles and triangles of support
+• The single defender needs to be smart about pressure - cut off one passing lane to force a predictable pass
+• Outside players must stay alert and ready to receive even though they're not currently in the action
+• Body shape matters when receiving - open up to see multiple passing options
+• Quick one or two touch passing keeps the ball moving and makes defending harder
+• Defenders should work together to press and cover passing lanes as a unit
+• Communication is huge - call for the ball and let teammates know when pressure is coming
+• Players switching roles need to move quickly into their new position
+• The pace should stay high - this isn't a walking drill""",
+            "drill_json": {
+                "name": "5v3v1 Rondo Possession Drill",
+                "description": "Dynamic possession drill alternating between 3v1 and 5v3 scenarios based on ball possession changes",
+                "field": {"type": "FULL", "attacking_direction": "NORTH", "markings": False, "goals": 0},
+                "players": [
+                    {"id": "A1", "role": "ATTACKER", "position": {"x": 38, "y": 49}},
+                    {"id": "A2", "role": "ATTACKER", "position": {"x": 48, "y": 38}},
+                    {"id": "A3", "role": "ATTACKER", "position": {"x": 49, "y": 62}},
+                    {"id": "A4", "role": "ATTACKER", "position": {"x": 62, "y": 50}},
+                    {"id": "A5", "role": "ATTACKER", "position": {"x": 50, "y": 50}},
+                    {"id": "D1", "role": "DEFENDER", "position": {"x": 46, "y": 45}},
+                    {"id": "D2", "role": "DEFENDER", "position": {"x": 53, "y": 53}},
+                    {"id": "D3", "role": "DEFENDER", "position": {"x": 45, "y": 55}}
+                ],
+                "cones": [
+                    {"position": {"x": 40, "y": 40}},
+                    {"position": {"x": 60, "y": 40}},
+                    {"position": {"x": 40, "y": 60}},
+                    {"position": {"x": 60, "y": 60}}
+                ],
+                "cone_gates": [],
+                "balls": [{"position": {"x": 45, "y": 55}}],
+                "mannequins": [],
+                "actions": [
+                    {"type": "PASS", "from_player": "D3", "to_player": "D2"},
+                    {"type": "PASS", "from_player": "D2", "to_player": "D1"},
+                    {"type": "PASS", "from_player": "D1", "to_player": "A2"}
+                ],
+                "coaching_points": [],
+                "variations": []
+            }
+        },
+        {
+            "name": "5v3 Switching Rondo",
+            "category": "Possession",
+            "setup": """• Set up two 12x12 yard grids using cones with about 5 yards of space between them
+• Divide players into two teams of five, each wearing different colored jerseys
+• In the first grid, place five players from one team and three players from the opposing team
+• Position the remaining two players from the defending team in the second grid
+• Keep extra balls near the coach to maintain flow when balls go out of play""",
+            "instructions": """1. Start play with a 5v3 rondo in the first grid where five attackers work to maintain possession
+2. The three defenders press and try to win the ball
+3. When the three defenders win possession, they immediately switch play by passing to their two teammates waiting in the other grid
+4. As the ball travels to the second grid, three players from the original attacking team sprint to the second grid to defend
+5. The two players who were waiting now have three teammates join them to create a new 5v3 situation
+6. The two remaining players from the original attacking team stay in the first grid and wait
+7. Play continues with possession switching between grids each time the defending team wins the ball
+8. Rotate which three players transition to the other grid so everyone experiences different roles
+9. Keep the pace high and competitive throughout the drill""",
+            "coaching_points": """• The switch pass must be accurate and weighted properly to reach teammates in the other grid
+• Three players need to decide quickly who transitions to defend in the other grid
+• Players waiting in the empty grid should position themselves to receive the switch pass at good angles
+• Attackers in possession need constant movement to create passing options in tight space
+• First touch is critical in the small grid to keep the ball away from defenders
+• Defenders should press together and cut off passing lanes rather than chasing individually
+• Communication is huge during transitions so players know who's going and who's staying
+• Players transitioning to defend must sprint to apply pressure immediately in the new grid
+• The two waiting players should scan and anticipate when the switch might happen
+• Body shape when receiving matters to see multiple passing options and avoid pressure
+• Players staying behind should be ready in case the switch pass gets intercepted""",
+            "drill_json": {
+                "name": "5v3 Switching Rondo",
+                "description": "Two-grid possession drill where teams switch between grids when possession is lost, creating continuous 5v3 scenarios with rapid transitions",
+                "field": {"type": "FULL", "attacking_direction": "NORTH", "markings": False, "goals": 0},
+                "players": [
+                    {"id": "A1", "role": "ATTACKER", "position": {"x": 30, "y": 44}},
+                    {"id": "A2", "role": "ATTACKER", "position": {"x": 38, "y": 36}},
+                    {"id": "A3", "role": "ATTACKER", "position": {"x": 47, "y": 45}},
+                    {"id": "A4", "role": "ATTACKER", "position": {"x": 37, "y": 51}},
+                    {"id": "A5", "role": "ATTACKER", "position": {"x": 31, "y": 37}},
+                    {"id": "D1", "role": "DEFENDER", "position": {"x": 38, "y": 44}},
+                    {"id": "D2", "role": "DEFENDER", "position": {"x": 44, "y": 38}},
+                    {"id": "D3", "role": "DEFENDER", "position": {"x": 44, "y": 50}},
+                    {"id": "D4", "role": "DEFENDER", "position": {"x": 65, "y": 46}},
+                    {"id": "D5", "role": "DEFENDER", "position": {"x": 68, "y": 38}}
+                ],
+                "cones": [
+                    {"position": {"x": 26, "y": 32}},
+                    {"position": {"x": 38, "y": 32}},
+                    {"position": {"x": 50, "y": 32}},
+                    {"position": {"x": 26, "y": 44}},
+                    {"position": {"x": 50, "y": 44}},
+                    {"position": {"x": 26, "y": 56}},
+                    {"position": {"x": 38, "y": 56}},
+                    {"position": {"x": 50, "y": 56}},
+                    {"position": {"x": 56, "y": 32}},
+                    {"position": {"x": 68, "y": 32}},
+                    {"position": {"x": 80, "y": 32}},
+                    {"position": {"x": 56, "y": 44}},
+                    {"position": {"x": 80, "y": 44}},
+                    {"position": {"x": 56, "y": 56}},
+                    {"position": {"x": 68, "y": 56}},
+                    {"position": {"x": 80, "y": 56}}
+                ],
+                "cone_gates": [],
+                "balls": [{"position": {"x": 38, "y": 44}}],
+                "mannequins": [],
+                "actions": [
+                    {"type": "PASS", "from_player": "A1", "to_player": "A2"},
+                    {"type": "PASS", "from_player": "A2", "to_player": "A3"},
+                    {"type": "PASS", "from_player": "A3", "to_player": "D4"}
+                ],
+                "coaching_points": [],
+                "variations": []
+            }
+        },
+        {
+            "name": "6v1 Overload Add Defenders Drill",
+            "category": "Possession",
+            "setup": """• Create a square or rectangular grid using cones, sized 20x20 yards for younger players or 30x30 yards for older players
+• Place one defender in the grid to start
+• Position six attackers inside the grid with one player starting with the ball
+• Keep the remaining players outside the area ready to enter as additional defenders
+• Have extra balls nearby to restart play quickly when needed""",
+            "instructions": """1. The attacking team begins play by passing and moving to keep possession away from the single defender
+2. Attackers try to complete as many consecutive passes as possible
+3. Add a new defender when the attackers reach a set number of passes, such as 5 or 10 consecutive completions
+4. When possession changes, the attacking team starts their pass count from zero
+5. Continue adding defenders each time the pass target is reached
+6. The drill progresses from 6v1 to 6v2, then 6v3, and continues until a set time limit or number of defenders is reached
+7. Reset the drill or rotate players after reaching the predetermined endpoint""",
+            "coaching_points": """• Attackers need to scan constantly to find open teammates and identify where space exists
+• Communication is essential as pressure builds. Simple calls help teammates know support is available
+• First touch must move the ball away from pressure and into space where the next pass opens up
+• Players without the ball should make sharp runs at angles to create clear passing lanes
+• As more defenders enter, attackers must spread wider to stretch the defense
+• The closest defender to the ball should apply immediate pressure to limit time and space
+• Defenders must stay patient and avoid diving in, which creates gaps for attackers to exploit
+• Defensive players should work together to cut off passing options and force mistakes
+• Watch for the transition moment when the ball turns over. Instant pressure or instant support makes the difference
+• Players switching from attack to defense need to recover quickly with their head up looking for the ball""",
+            "drill_json": {
+                "name": "6v1 Overload Add Defenders Drill",
+                "description": "Progressive possession drill starting with 6 attackers vs 1 defender. Additional defenders are added each time attackers reach target consecutive passes (5-10). Develops possession under increasing pressure.",
+                "field": {"type": "FULL", "attacking_direction": "NORTH", "markings": False, "goals": 0},
+                "players": [
+                    {"id": "A1", "role": "ATTACKER", "position": {"x": 45, "y": 45}},
+                    {"id": "A2", "role": "ATTACKER", "position": {"x": 55, "y": 47}},
+                    {"id": "A3", "role": "ATTACKER", "position": {"x": 42, "y": 52}},
+                    {"id": "A4", "role": "ATTACKER", "position": {"x": 58, "y": 53}},
+                    {"id": "A5", "role": "ATTACKER", "position": {"x": 47, "y": 57}},
+                    {"id": "A6", "role": "ATTACKER", "position": {"x": 53, "y": 55}},
+                    {"id": "D1", "role": "DEFENDER", "position": {"x": 50, "y": 50}},
+                    {"id": "D2", "role": "DEFENDER", "position": {"x": 65, "y": 45}},
+                    {"id": "D3", "role": "DEFENDER", "position": {"x": 65, "y": 50}},
+                    {"id": "D4", "role": "DEFENDER", "position": {"x": 65, "y": 55}},
+                    {"id": "D5", "role": "DEFENDER", "position": {"x": 70, "y": 47}},
+                    {"id": "D6", "role": "DEFENDER", "position": {"x": 70, "y": 53}}
+                ],
+                "cones": [
+                    {"position": {"x": 40, "y": 40}},
+                    {"position": {"x": 60, "y": 40}},
+                    {"position": {"x": 40, "y": 60}},
+                    {"position": {"x": 60, "y": 60}}
+                ],
+                "cone_gates": [],
+                "balls": [{"position": {"x": 45, "y": 45}}],
+                "mannequins": [],
+                "actions": [
+                    {"type": "PASS", "from_player": "A1", "to_player": "A2"},
+                    {"type": "PASS", "from_player": "A2", "to_player": "A6"},
+                    {"type": "RUN", "player": "D2", "to_position": {"x": 58, "y": 48}}
+                ],
+                "coaching_points": [],
+                "variations": []
+            }
+        },
+        {
+            "name": "4v4+2 Endzone Possession Game",
+            "category": "Possession",
+            "setup": """• Create a 12x20 yard grid using cones
+• Mark two endzones that are 3x12 yards on each end of the grid
+• Divide your team into two groups of six players each, plus select two neutral players
+• Place four players from each team in the central playing area
+• Position one player from each team in each endzone
+• Station the two neutral players outside the long sides of the grid
+• Keep a supply of balls near the coach to restart play quickly""",
+            "instructions": """1. Start the game with one team in possession in the center grid
+2. The team with the ball plays 4v4 in the middle, using the two neutral outside players as passing options
+3. Players can pass to their teammate in the endzone to help maintain possession
+4. The endzone player must move to find open space and good angles to receive
+5. When an endzone player receives the ball, they can dribble out of the zone to join the game
+6. If the endzone player dribbles out, they switch positions with the player who passed them the ball
+7. Exception: if a neutral player passes to the endzone, no position switch happens and the ball must be passed back out
+8. When the other team wins the ball, they immediately try to keep possession and use their endzone player
+9. Start as a simple rondo with no scoring to let players learn the pattern
+10. Progress to scoring one point for completing a set number of consecutive passes
+11. Next progression: score one point for passing to the endzone and keeping possession
+12. Final progression: score one point for passing to one endzone, keeping the ball, then passing to the opposite endzone""",
+            "coaching_points": """• Players need to scan before receiving the ball to know where pressure is coming from and where space exists
+• First touch should move the ball into space away from defenders, not just stop it
+• The endzone player can't stand still - they must move side to side to create passing angles
+• Players in the middle should constantly check their shoulders to stay aware of all options
+• Speed of play matters - one or two touch passing breaks down the defense faster than holding the ball
+• Body shape when receiving is key - open up to see the whole field
+• Players off the ball need to move into passing lanes and create triangles of support
+• Communication helps - call for the ball when you're open but keep it simple and clear
+• When defending, work together to press as a unit and cut off passing lanes
+• The neutral players should move up and down their line to stay available at the right angle""",
+            "drill_json": {
+                "name": "4v4+2 Endzone Possession Game",
+                "description": "A possession drill with two teams of 4 playing in the center, supported by 2 neutral players and endzone teammates. Teams maintain possession and can switch positions when passing to endzones.",
+                "field": {"type": "FULL", "attacking_direction": "NORTH", "markings": False, "goals": 0},
+                "players": [
+                    {"id": "A1", "role": "ATTACKER", "position": {"x": 45, "y": 52}},
+                    {"id": "A2", "role": "ATTACKER", "position": {"x": 51, "y": 60}},
+                    {"id": "A3", "role": "ATTACKER", "position": {"x": 52, "y": 54}},
+                    {"id": "A4", "role": "ATTACKER", "position": {"x": 55, "y": 48}},
+                    {"id": "A5", "role": "ATTACKER", "position": {"x": 53, "y": 41}},
+                    {"id": "A6", "role": "ATTACKER", "position": {"x": 47, "y": 68}},
+                    {"id": "D1", "role": "DEFENDER", "position": {"x": 47, "y": 50}},
+                    {"id": "D2", "role": "DEFENDER", "position": {"x": 53, "y": 56}},
+                    {"id": "D3", "role": "DEFENDER", "position": {"x": 51, "y": 52}},
+                    {"id": "D4", "role": "DEFENDER", "position": {"x": 49, "y": 46}},
+                    {"id": "D5", "role": "DEFENDER", "position": {"x": 53, "y": 69}},
+                    {"id": "D6", "role": "DEFENDER", "position": {"x": 48, "y": 41}},
+                    {"id": "N1", "role": "NEUTRAL", "position": {"x": 42, "y": 55}},
+                    {"id": "N2", "role": "NEUTRAL", "position": {"x": 58, "y": 55}}
+                ],
+                "cones": [
+                    {"position": {"x": 44, "y": 40}},
+                    {"position": {"x": 56, "y": 40}},
+                    {"position": {"x": 44, "y": 70}},
+                    {"position": {"x": 56, "y": 70}},
+                    {"position": {"x": 44, "y": 43}},
+                    {"position": {"x": 56, "y": 43}},
+                    {"position": {"x": 44, "y": 67}},
+                    {"position": {"x": 56, "y": 67}}
+                ],
+                "cone_gates": [],
+                "balls": [{"position": {"x": 45, "y": 52}}],
+                "mannequins": [],
+                "actions": [
+                    {"type": "PASS", "from_player": "A1", "to_player": "A2"},
+                    {"type": "PASS", "from_player": "A2", "to_player": "A6"},
+                    {"type": "DRIBBLE", "player": "A6", "to_position": {"x": 47, "y": 60}},
+                    {"type": "RUN", "player": "A2", "to_position": {"x": 50, "y": 68}}
+                ],
+                "coaching_points": [],
+                "variations": []
+            }
+        }
+    ]
+}
 
 
 def call_claude_api(request: DrillRequest) -> dict:
