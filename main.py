@@ -83,6 +83,7 @@ class DrillSummary(BaseModel):
     duration: Optional[str] = None
     difficulty: Optional[str] = None
     description: Optional[str] = None
+    svg: Optional[str] = None  # Base64 encoded SVG thumbnail
 
 class DrillFull(BaseModel):
     id: str
@@ -164,8 +165,12 @@ def get_drill_id(drill: Dict, index: int) -> str:
     """Get or generate a drill ID"""
     return drill.get('id') or drill.get('name', f'drill-{index}').lower().replace(' ', '-')
 
-def drill_to_summary(drill: Dict, index: int) -> DrillSummary:
-    """Convert drill dict to summary (no full text fields)"""
+def drill_to_summary(drill: Dict, index: int, include_svg: bool = False) -> DrillSummary:
+    """Convert drill dict to summary"""
+    svg = None
+    if include_svg and drill.get('drill_json'):
+        svg = render_drill_svg(drill['drill_json'])
+    
     return DrillSummary(
         id=get_drill_id(drill, index),
         name=drill.get('name', 'Unnamed Drill'),
@@ -174,7 +179,8 @@ def drill_to_summary(drill: Dict, index: int) -> DrillSummary:
         player_count=drill.get('player_count'),
         duration=drill.get('duration'),
         difficulty=drill.get('difficulty'),
-        description=drill.get('description', '')[:200] if drill.get('description') else None
+        description=drill.get('description', '')[:200] if drill.get('description') else None,
+        svg=svg
     )
 
 def drill_to_full(drill: Dict, index: int) -> DrillFull:
@@ -272,10 +278,10 @@ async def health_check():
     )
 
 @app.get("/api/library", response_model=LibraryListResponse)
-async def list_drills():
-    """Get all drills (summary only, no SVG)"""
+async def list_drills(include_svg: bool = Query(True, description="Include SVG diagrams in response")):
+    """Get all drills with optional SVG diagrams"""
     library = load_library()
-    summaries = [drill_to_summary(drill, i) for i, drill in enumerate(library)]
+    summaries = [drill_to_summary(drill, i, include_svg=include_svg) for i, drill in enumerate(library)]
     
     return LibraryListResponse(
         success=True,
@@ -310,7 +316,8 @@ async def filter_drills(
     min_players: Optional[int] = Query(None, description="Minimum number of players"),
     max_players: Optional[int] = Query(None, description="Maximum number of players"),
     difficulty: Optional[str] = Query(None, description="Filter by difficulty (EASY, MEDIUM, HARD)"),
-    search: Optional[str] = Query(None, description="Search in name and description")
+    search: Optional[str] = Query(None, description="Search in name and description"),
+    include_svg: bool = Query(True, description="Include SVG diagrams in response")
 ):
     """Filter drills by various criteria"""
     library = load_library()
@@ -333,7 +340,7 @@ async def filter_drills(
         if matches_filter(drill, active_filters)
     ]
     
-    summaries = [drill_to_summary(drill, i) for i, drill in enumerate(filtered)]
+    summaries = [drill_to_summary(drill, i, include_svg=include_svg) for i, drill in enumerate(filtered)]
     
     return FilterResponse(
         success=True,
