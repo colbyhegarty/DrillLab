@@ -126,6 +126,38 @@ class FilterResponse(BaseModel):
 # SVG RENDERING
 # ============================================================
 
+def get_drill_json(drill: Dict) -> Optional[Dict]:
+    """
+    Extract drill_json from a drill object.
+    Handles two formats:
+    1. drill_json is nested: {"name": "...", "drill_json": {"field": ..., "players": ...}}
+    2. drill_json is at root: {"name": "...", "field": ..., "players": ...}
+    """
+    # Check if drill_json is nested
+    if drill.get('drill_json'):
+        return drill['drill_json']
+    
+    # Check if diagram data is at root level
+    if drill.get('field') and drill.get('players'):
+        return {
+            "name": drill.get('name', 'Untitled'),
+            "description": drill.get('description', ''),
+            "field": drill.get('field'),
+            "players": drill.get('players', []),
+            "cones": drill.get('cones', []),
+            "cone_gates": drill.get('cone_gates', []),
+            "balls": drill.get('balls', []),
+            "goals": drill.get('goals', []),
+            "mini_goals": drill.get('mini_goals', []),
+            "mannequins": drill.get('mannequins', []),
+            "actions": drill.get('actions', []),
+            "coaching_points": drill.get('coaching_points', []),
+            "variations": drill.get('variations', [])
+        }
+    
+    return None
+
+
 def render_drill_svg(drill_json: Dict) -> Optional[str]:
     """Render drill JSON to SVG and return as base64 string"""
     try:
@@ -168,8 +200,10 @@ def get_drill_id(drill: Dict, index: int) -> str:
 def drill_to_summary(drill: Dict, index: int, include_svg: bool = False) -> DrillSummary:
     """Convert drill dict to summary"""
     svg = None
-    if include_svg and drill.get('drill_json'):
-        svg = render_drill_svg(drill['drill_json'])
+    if include_svg:
+        drill_json = get_drill_json(drill)
+        if drill_json:
+            svg = render_drill_svg(drill_json)
     
     return DrillSummary(
         id=get_drill_id(drill, index),
@@ -200,7 +234,7 @@ def drill_to_full(drill: Dict, index: int) -> DrillFull:
         coaching_points_text=drill.get('coaching_points_text'),
         source=drill.get('source'),
         source_url=drill.get('source_url'),
-        drill_json=drill.get('drill_json')
+        drill_json=get_drill_json(drill)
     )
 
 def matches_filter(drill: Dict, filters: Dict) -> bool:
@@ -360,10 +394,11 @@ async def get_drill(drill_id: str):
         if did == drill_id or drill.get('name', '').lower().replace(' ', '-') == drill_id.lower():
             full_drill = drill_to_full(drill, i)
             
-            # Render SVG if drill_json exists
+            # Render SVG if drill data exists
             svg = None
-            if drill.get('drill_json'):
-                svg = render_drill_svg(drill['drill_json'])
+            drill_json = get_drill_json(drill)
+            if drill_json:
+                svg = render_drill_svg(drill_json)
             
             return DrillDetailResponse(
                 success=True,
