@@ -116,6 +116,10 @@ class CategoriesResponse(BaseModel):
     success: bool
     categories: List[Dict[str, Any]]
 
+class CategoriesSimpleResponse(BaseModel):
+    success: bool
+    categories: List[str]
+
 class FilterResponse(BaseModel):
     success: bool
     count: int
@@ -197,6 +201,70 @@ def get_drill_id(drill: Dict, index: int) -> str:
     """Get or generate a drill ID"""
     return drill.get('id') or drill.get('name', f'drill-{index}').lower().replace(' ', '-')
 
+
+def clean_coaching_points(text: str) -> str:
+    """Remove footer/website content from coaching points text"""
+    if not text:
+        return text
+    
+    # Keywords that indicate start of footer content
+    stop_keywords = [
+        'drill equipment',
+        'drill ages',
+        'drill topic',
+        'soccer drill titled',
+        'created by',
+        'soccerxpert',
+        'subscribe',
+        'privacy policy',
+        'user agreement',
+        'copyright',
+        'quick links',
+        'soccer drills',
+        'soccer tips',
+        'email address'
+    ]
+    
+    lines = text.split('\n')
+    clean_lines = []
+    
+    for line in lines:
+        line_lower = line.strip().lower()
+        
+        # Check if this line contains any stop keyword
+        should_stop = False
+        for keyword in stop_keywords:
+            if keyword in line_lower:
+                should_stop = True
+                break
+        
+        if should_stop:
+            break  # Stop processing, ignore this and all following lines
+        
+        if line.strip():
+            clean_lines.append(line)
+    
+    return '\n'.join(clean_lines)
+
+
+def clean_instructions(text: str) -> str:
+    """Format instructions as bullet points, removing leading numbers"""
+    if not text:
+        return text
+    
+    lines = text.split('\n')
+    clean_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            # Remove leading numbers like "1.", "2)", "1 ", etc.
+            import re
+            cleaned = re.sub(r'^\d+[\.\)\s]+', '', stripped)
+            clean_lines.append('• ' + cleaned)
+    
+    return '\n'.join(clean_lines)
+
 def drill_to_summary(drill: Dict, index: int, include_svg: bool = False) -> DrillSummary:
     """Convert drill dict to summary"""
     svg = None
@@ -229,9 +297,9 @@ def drill_to_full(drill: Dict, index: int) -> DrillFull:
         duration=drill.get('duration'),
         difficulty=drill.get('difficulty'),
         setup_text=drill.get('setup_text'),
-        instructions_text=drill.get('instructions_text'),
+        instructions_text=clean_instructions(drill.get('instructions_text')),
         variations_text=drill.get('variations_text'),
-        coaching_points_text=drill.get('coaching_points_text'),
+        coaching_points_text=clean_coaching_points(drill.get('coaching_points_text')),
         source=drill.get('source'),
         source_url=drill.get('source_url'),
         drill_json=get_drill_json(drill)
@@ -330,17 +398,38 @@ async def list_categories():
     
     category_counts = {}
     for drill in library:
-        cat = drill.get('category', 'Uncategorized') or 'Uncategorized'
-        category_counts[cat] = category_counts.get(cat, 0) + 1
+        cat = drill.get('category', '') or ''
+        # Skip empty categories
+        if cat.strip():
+            category_counts[cat] = category_counts.get(cat, 0) + 1
     
+    # Return as simple strings for easier frontend consumption
     categories = [
         {"name": name, "count": count}
         for name, count in sorted(category_counts.items())
+        if name.strip()  # Extra safety: filter out empty names
     ]
     
     return CategoriesResponse(
         success=True,
         categories=categories
+    )
+
+
+@app.get("/api/library/categories/simple", response_model=CategoriesSimpleResponse)
+async def list_categories_simple():
+    """Get all unique categories as simple string array"""
+    library = load_library()
+    
+    categories = set()
+    for drill in library:
+        cat = drill.get('category', '') or ''
+        if cat.strip():
+            categories.add(cat.strip())
+    
+    return CategoriesSimpleResponse(
+        success=True,
+        categories=sorted(list(categories))
     )
 
 @app.get("/api/library/filter", response_model=FilterResponse)
