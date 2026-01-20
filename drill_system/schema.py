@@ -114,6 +114,30 @@ class Mannequin(BaseModel):
         return v.upper()
 
 
+class MiniGoal(BaseModel):
+    """A mini/pugg goal that can be placed anywhere on the field"""
+    position: Position
+    rotation: int = Field(default=0, description="Rotation in degrees (0, 90, 180, 270)")
+    
+    @field_validator('rotation')
+    @classmethod
+    def validate_rotation(cls, v):
+        # Normalize to 0, 90, 180, 270
+        return v % 360
+
+
+class Goal(BaseModel):
+    """A full-size goal that can be placed anywhere on the field"""
+    position: Position
+    rotation: int = Field(default=0, description="Rotation in degrees (0, 90, 180, 270)")
+    
+    @field_validator('rotation')
+    @classmethod
+    def validate_rotation(cls, v):
+        # Normalize to 0, 90, 180, 270
+        return v % 360
+
+
 # ============================================================
 # ACTIONS
 # ============================================================
@@ -161,10 +185,12 @@ class DribbleAction(BaseModel):
 
 
 class ShotAction(BaseModel):
-    """Shot on goal"""
+    """Shot toward a target position or goal"""
     type: Literal["SHOT"] = "SHOT"
     player: str = Field(description="Player ID taking the shot")
-    target: Literal["GOAL"] = "GOAL"
+    # Support both old format (target: "GOAL") and new format (to_position)
+    target: Optional[Literal["GOAL"]] = Field(default=None, description="Legacy: 'GOAL' for auto-aim at goal")
+    to_position: Optional[Position] = Field(default=None, description="Target position for the shot")
 
     @field_validator('player')
     @classmethod
@@ -195,17 +221,21 @@ class Drill(BaseModel):
     provide coaching instructions.
     """
     name: str = Field(description="Name of the drill")
-    description: str = Field(description="Brief description of drill purpose")
+    description: str = Field(default="", description="Brief description of drill purpose")
     
     # Field setup
     field: FieldConfig = Field(default_factory=FieldConfig)
     
     # Entities
-    players: List[Player] = Field(min_length=1)
+    players: List[Player] = Field(default_factory=list)
     cones: List[Cone] = Field(default_factory=list)
     cone_gates: List[ConeGate] = Field(default_factory=list)
     balls: List[Ball] = Field(default_factory=list)
     mannequins: List[Mannequin] = Field(default_factory=list)
+    
+    # NEW: Mini goals and full-size goals that can be placed anywhere
+    mini_goals: List[MiniGoal] = Field(default_factory=list)
+    goals: List[Goal] = Field(default_factory=list)
     
     # Movement sequence
     actions: List[Action] = Field(default_factory=list)
