@@ -207,27 +207,26 @@ class FieldRenderer:
                 if self.y_min <= 50 <= self.y_max and self.x_min <= 50 <= self.x_max:
                     self._draw_center_circle()
             
-            # Draw goal areas with markings at y=0 and y=100
-            # field.goals controls the BUILT-IN goals at standard positions
-            # These are always drawn when field.goals >= 1, regardless of explicit goals
-            # UNLESS markings is false AND explicit goals exist (then explicit goals take over completely)
-            if self.field.goals >= 1:
-                # Draw attacking goal area (penalty box + goal at goal line)
-                if self.field.attacking_direction == AttackingDirection.NORTH:
-                    if self.y_max >= 85:
-                        self._draw_goal_area(100)
-                else:  # SOUTH
-                    if self.y_min <= 15:
-                        self._draw_goal_area(0)
-            
-            if self.field.goals >= 2:
-                # Draw defending goal area
-                if self.field.attacking_direction == AttackingDirection.NORTH:
-                    if self.y_min <= 15:
-                        self._draw_goal_area(0)
-                else:  # SOUTH
-                    if self.y_max >= 85:
-                        self._draw_goal_area(100)
+            # ALWAYS draw penalty area markings when markings=true and area is visible
+            # The goal is only drawn when field.goals >= 1
+            if self.field.attacking_direction == AttackingDirection.NORTH:
+                # Attacking end is at y=100
+                if self.y_max >= 85:
+                    draw_goal = (self.field.goals >= 1)
+                    self._draw_goal_area(100, draw_goal=draw_goal)
+                # Defending end at y=0 (only for FULL field or when goals >= 2)
+                if self.field.type == FieldType.FULL and self.y_min <= 15:
+                    draw_goal = (self.field.goals >= 2)
+                    self._draw_goal_area(0, draw_goal=draw_goal)
+            else:  # SOUTH
+                # Attacking end is at y=0
+                if self.y_min <= 15:
+                    draw_goal = (self.field.goals >= 1)
+                    self._draw_goal_area(0, draw_goal=draw_goal)
+                # Defending end at y=100 (only for FULL field or when goals >= 2)
+                if self.field.type == FieldType.FULL and self.y_max >= 85:
+                    draw_goal = (self.field.goals >= 2)
+                    self._draw_goal_area(100, draw_goal=draw_goal)
         
         elif self.field.goals > 0 and not has_explicit_goals:
             # No markings but has built-in goals (only if no explicit goals)
@@ -279,8 +278,8 @@ class FieldRenderer:
         ))
         self.ax.scatter(50, 50, s=20, c=LINE_COLOR, zorder=2)
     
-    def _draw_goal_area(self, goal_y: float):
-        """Draw penalty box, 6-yard box, and goal"""
+    def _draw_goal_area(self, goal_y: float, draw_goal: bool = True):
+        """Draw penalty box, 6-yard box, and optionally the goal"""
         into = -1 if goal_y == 100 else 1
         
         pen_y = goal_y + into * 18
@@ -300,8 +299,9 @@ class FieldRenderer:
         # Penalty spot
         self.ax.scatter(50, pen_spot_y, s=30, c=LINE_COLOR, zorder=2)
         
-        # Goal
-        self._draw_goal_with_net(50, goal_y, width=8)
+        # Goal (only if draw_goal is True)
+        if draw_goal:
+            self._draw_goal_with_net(50, goal_y, width=8)
     
     def _draw_goal_with_net(self, cx: float, goal_line_y: float, width: float = 8):
         """Draw a goal with posts, crossbar, and net at a fixed y position"""
@@ -429,21 +429,24 @@ class EntityRenderer:
         """
         Draw a mini/pugg goal at the specified position with rotation.
         Looks like a smaller version of the full-size goal (rectangular with posts and net).
+        Color is white to match full-size goals.
         
-        Rotation:
-        - 0°: Opening faces NORTH (up)
-        - 90°: Opening faces EAST (right)  
-        - 180°: Opening faces SOUTH (down)
-        - 270°: Opening faces WEST (left)
+        Rotation (flipped 180° from input - so 0° input means opening faces SOUTH):
+        - 0° input: Opening faces SOUTH (down) - net at top
+        - 90° input: Opening faces WEST (left) - net at right  
+        - 180° input: Opening faces NORTH (up) - net at bottom
+        - 270° input: Opening faces EAST (right) - net at left
         """
         x, y = mini_goal.position.x, mini_goal.position.y
-        rotation = mini_goal.rotation
+        # Flip rotation by 180 degrees
+        rotation = (mini_goal.rotation + 180) % 360
         
         width = 4  # Mini goal width
         depth = 2  # Mini goal depth
         post_width = 2.0
         
-        frame_color = MINI_GOAL_COLOR
+        # Use white for mini goals (same as full-size goals)
+        frame_color = GOAL_COLOR  # white
         net_color = 'gray'
         
         if rotation == 0:  # Faces NORTH (opening at top)
