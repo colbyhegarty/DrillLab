@@ -194,6 +194,9 @@ class FieldRenderer:
         self._draw_grass()
         self._draw_outline()
         
+        # Check if explicit goals are provided in the drill (takes precedence)
+        has_explicit_goals = len(self.drill.goals) > 0
+        
         if self.field.markings:
             # Draw halfway line if visible
             if self.y_min <= 50 <= self.y_max:
@@ -205,14 +208,15 @@ class FieldRenderer:
                     self._draw_center_circle()
             
             # Draw goal areas with markings at y=0 and y=100
-            if self.field.goals >= 1:
+            # ONLY if no explicit goals array is provided
+            if self.field.goals >= 1 and not has_explicit_goals:
                 if self.y_max >= 85:
                     self._draw_goal_area(100)
                 if self.field.goals >= 2 and self.y_min <= 15:
                     self._draw_goal_area(0)
         
-        elif self.field.goals > 0:
-            # No markings but has built-in goals
+        elif self.field.goals > 0 and not has_explicit_goals:
+            # No markings but has built-in goals (only if no explicit goals)
             if self.field.goals >= 1:
                 top_goal_y = self.content_y_max
                 self._draw_field_goal(top_goal_y, goal_width=8)
@@ -405,6 +409,7 @@ class EntityRenderer:
     def draw_mini_goal(self, mini_goal):
         """
         Draw a mini/pugg goal at the specified position with rotation.
+        Uses a curved/arc shape with the net rendered in the middle.
         
         Rotation:
         - 0°: Opening faces NORTH (up)
@@ -412,78 +417,86 @@ class EntityRenderer:
         - 180°: Opening faces SOUTH (down)
         - 270°: Opening faces WEST (left)
         """
+        import matplotlib.patches as mpatches
+        
         x, y = mini_goal.position.x, mini_goal.position.y
         rotation = mini_goal.rotation
         
-        width = 4  # Mini goal width
-        depth = 2  # Mini goal depth
+        width = 4  # Mini goal width (opening width)
+        depth = 2.5  # Mini goal depth (how far back the net goes)
         
-        # Calculate corners based on rotation
-        if rotation == 0:  # Faces NORTH (up)
-            # Opening at top, net at bottom
-            corners = [
-                (x - width/2, y),      # Left back
-                (x - width/2, y + depth),  # Left front
-                (x + width/2, y + depth),  # Right front
-                (x + width/2, y),      # Right back
-            ]
-        elif rotation == 90:  # Faces EAST (right)
-            # Opening at right, net at left
-            corners = [
-                (x, y - width/2),      # Back bottom
-                (x + depth, y - width/2),  # Front bottom
-                (x + depth, y + width/2),  # Front top
-                (x, y + width/2),      # Back top
-            ]
-        elif rotation == 180:  # Faces SOUTH (down)
-            # Opening at bottom, net at top
-            corners = [
-                (x - width/2, y),      # Left front
-                (x - width/2, y - depth),  # Left back
-                (x + width/2, y - depth),  # Right back
-                (x + width/2, y),      # Right front
-            ]
-        else:  # 270° - Faces WEST (left)
-            # Opening at left, net at right
-            corners = [
-                (x, y - width/2),      # Front bottom
-                (x - depth, y - width/2),  # Back bottom
-                (x - depth, y + width/2),  # Back top
-                (x, y + width/2),      # Front top
-            ]
-        
-        # Draw the frame (3 sides, open side is the "front")
         frame_color = MINI_GOAL_COLOR
+        net_color = 'gray'
         lw = 2.5
         
-        if rotation == 0:  # Opening at top
-            self.ax.plot([corners[0][0], corners[3][0]], [corners[0][1], corners[3][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Back
-            self.ax.plot([corners[0][0], corners[1][0]], [corners[0][1], corners[1][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Left
-            self.ax.plot([corners[3][0], corners[2][0]], [corners[3][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Right
-        elif rotation == 90:  # Opening at right
-            self.ax.plot([corners[0][0], corners[3][0]], [corners[0][1], corners[3][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Back (left side)
-            self.ax.plot([corners[0][0], corners[1][0]], [corners[0][1], corners[1][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Bottom
-            self.ax.plot([corners[3][0], corners[2][0]], [corners[3][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Top
-        elif rotation == 180:  # Opening at bottom
-            self.ax.plot([corners[1][0], corners[2][0]], [corners[1][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Back
-            self.ax.plot([corners[0][0], corners[1][0]], [corners[0][1], corners[1][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Left
-            self.ax.plot([corners[3][0], corners[2][0]], [corners[3][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Right
-        else:  # 270° - Opening at left
-            self.ax.plot([corners[1][0], corners[2][0]], [corners[1][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Back (right side)
-            self.ax.plot([corners[0][0], corners[1][0]], [corners[0][1], corners[1][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Bottom
-            self.ax.plot([corners[3][0], corners[2][0]], [corners[3][1], corners[2][1]], 
-                        color=frame_color, lw=lw, zorder=6)  # Top
+        # Draw based on rotation
+        if rotation == 0:  # Faces NORTH (up) - opening at top
+            # Posts (straight lines on sides)
+            self.ax.plot([x - width/2, x - width/2], [y, y + depth], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            self.ax.plot([x + width/2, x + width/2], [y, y + depth], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            # Curved back (arc at bottom)
+            arc = mpatches.Arc((x, y), width, depth * 1.5, angle=0,
+                              theta1=180, theta2=360,
+                              color=frame_color, lw=lw, zorder=6)
+            self.ax.add_patch(arc)
+            # Net strings (vertical)
+            for i in range(5):
+                net_x = x - width/2 + i * (width / 4)
+                self.ax.plot([net_x, net_x], [y - depth*0.5, y + depth], 
+                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+                            
+        elif rotation == 90:  # Faces EAST (right) - opening at right
+            # Posts
+            self.ax.plot([x, x + depth], [y - width/2, y - width/2], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            self.ax.plot([x, x + depth], [y + width/2, y + width/2], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            # Curved back (arc on left)
+            arc = mpatches.Arc((x, y), depth * 1.5, width, angle=0,
+                              theta1=90, theta2=270,
+                              color=frame_color, lw=lw, zorder=6)
+            self.ax.add_patch(arc)
+            # Net strings (horizontal)
+            for i in range(5):
+                net_y = y - width/2 + i * (width / 4)
+                self.ax.plot([x - depth*0.5, x + depth], [net_y, net_y], 
+                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+                            
+        elif rotation == 180:  # Faces SOUTH (down) - opening at bottom
+            # Posts
+            self.ax.plot([x - width/2, x - width/2], [y, y - depth], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            self.ax.plot([x + width/2, x + width/2], [y, y - depth], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            # Curved back (arc at top)
+            arc = mpatches.Arc((x, y), width, depth * 1.5, angle=0,
+                              theta1=0, theta2=180,
+                              color=frame_color, lw=lw, zorder=6)
+            self.ax.add_patch(arc)
+            # Net strings (vertical)
+            for i in range(5):
+                net_x = x - width/2 + i * (width / 4)
+                self.ax.plot([net_x, net_x], [y - depth, y + depth*0.5], 
+                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+                            
+        else:  # 270° - Faces WEST (left) - opening at left
+            # Posts
+            self.ax.plot([x, x - depth], [y - width/2, y - width/2], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            self.ax.plot([x, x - depth], [y + width/2, y + width/2], 
+                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+            # Curved back (arc on right)
+            arc = mpatches.Arc((x, y), depth * 1.5, width, angle=0,
+                              theta1=270, theta2=450,
+                              color=frame_color, lw=lw, zorder=6)
+            self.ax.add_patch(arc)
+            # Net strings (horizontal)
+            for i in range(5):
+                net_y = y - width/2 + i * (width / 4)
+                self.ax.plot([x - depth, x + depth*0.5], [net_y, net_y], 
+                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
     
     def draw_full_goal(self, goal):
         """
