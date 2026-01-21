@@ -194,7 +194,7 @@ class FieldRenderer:
         self._draw_grass()
         self._draw_outline()
         
-        # Check if explicit goals are provided in the drill (takes precedence)
+        # Check if explicit goals are provided in the drill
         has_explicit_goals = len(self.drill.goals) > 0
         
         if self.field.markings:
@@ -208,22 +208,41 @@ class FieldRenderer:
                     self._draw_center_circle()
             
             # Draw goal areas with markings at y=0 and y=100
-            # ONLY if no explicit goals array is provided
-            if self.field.goals >= 1 and not has_explicit_goals:
-                if self.y_max >= 85:
-                    self._draw_goal_area(100)
-                if self.field.goals >= 2 and self.y_min <= 15:
-                    self._draw_goal_area(0)
+            # field.goals controls the BUILT-IN goals at standard positions
+            # These are always drawn when field.goals >= 1, regardless of explicit goals
+            # UNLESS markings is false AND explicit goals exist (then explicit goals take over completely)
+            if self.field.goals >= 1:
+                # Draw attacking goal area (penalty box + goal at goal line)
+                if self.field.attacking_direction == AttackingDirection.NORTH:
+                    if self.y_max >= 85:
+                        self._draw_goal_area(100)
+                else:  # SOUTH
+                    if self.y_min <= 15:
+                        self._draw_goal_area(0)
+            
+            if self.field.goals >= 2:
+                # Draw defending goal area
+                if self.field.attacking_direction == AttackingDirection.NORTH:
+                    if self.y_min <= 15:
+                        self._draw_goal_area(0)
+                else:  # SOUTH
+                    if self.y_max >= 85:
+                        self._draw_goal_area(100)
         
         elif self.field.goals > 0 and not has_explicit_goals:
             # No markings but has built-in goals (only if no explicit goals)
+            # When markings are OFF and explicit goals exist, skip built-in goals entirely
             if self.field.goals >= 1:
-                top_goal_y = self.content_y_max
-                self._draw_field_goal(top_goal_y, goal_width=8)
+                if self.field.attacking_direction == AttackingDirection.NORTH:
+                    self._draw_field_goal(100, goal_width=8)
+                else:
+                    self._draw_field_goal(0, goal_width=8)
             
             if self.field.goals >= 2:
-                bottom_goal_y = self.content_y_min
-                self._draw_field_goal(bottom_goal_y, goal_width=8)
+                if self.field.attacking_direction == AttackingDirection.NORTH:
+                    self._draw_field_goal(0, goal_width=8)
+                else:
+                    self._draw_field_goal(100, goal_width=8)
         
         self.ax.set_aspect("equal")
         self.ax.axis("off")
@@ -409,7 +428,7 @@ class EntityRenderer:
     def draw_mini_goal(self, mini_goal):
         """
         Draw a mini/pugg goal at the specified position with rotation.
-        Uses a curved/arc shape with the net rendered in the middle.
+        Looks like a smaller version of the full-size goal (rectangular with posts and net).
         
         Rotation:
         - 0°: Opening faces NORTH (up)
@@ -417,86 +436,79 @@ class EntityRenderer:
         - 180°: Opening faces SOUTH (down)
         - 270°: Opening faces WEST (left)
         """
-        import matplotlib.patches as mpatches
-        
         x, y = mini_goal.position.x, mini_goal.position.y
         rotation = mini_goal.rotation
         
-        width = 4  # Mini goal width (opening width)
-        depth = 2.5  # Mini goal depth (how far back the net goes)
+        width = 4  # Mini goal width
+        depth = 2  # Mini goal depth
+        post_width = 2.0
         
         frame_color = MINI_GOAL_COLOR
         net_color = 'gray'
-        lw = 2.5
         
-        # Draw based on rotation
-        if rotation == 0:  # Faces NORTH (up) - opening at top
-            # Posts (straight lines on sides)
+        if rotation == 0:  # Faces NORTH (opening at top)
+            # Posts (vertical)
             self.ax.plot([x - width/2, x - width/2], [y, y + depth], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y + depth], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
-            # Curved back (arc at bottom)
-            arc = mpatches.Arc((x, y), width, depth * 1.5, angle=0,
-                              theta1=180, theta2=360,
-                              color=frame_color, lw=lw, zorder=6)
-            self.ax.add_patch(arc)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
+            # Back bar
+            self.ax.plot([x - width/2, x + width/2], [y, y], 
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             # Net strings (vertical)
-            for i in range(5):
-                net_x = x - width/2 + i * (width / 4)
-                self.ax.plot([net_x, net_x], [y - depth*0.5, y + depth], 
-                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+            num_strings = 5
+            for i in range(num_strings):
+                net_x = x - width/2 + i * (width / (num_strings - 1))
+                self.ax.plot([net_x, net_x], [y, y + depth], 
+                            color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
-        elif rotation == 90:  # Faces EAST (right) - opening at right
-            # Posts
+        elif rotation == 90:  # Faces EAST (opening at right)
+            # Posts (horizontal)
             self.ax.plot([x, x + depth], [y - width/2, y - width/2], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x + depth], [y + width/2, y + width/2], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
-            # Curved back (arc on left)
-            arc = mpatches.Arc((x, y), depth * 1.5, width, angle=0,
-                              theta1=90, theta2=270,
-                              color=frame_color, lw=lw, zorder=6)
-            self.ax.add_patch(arc)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
+            # Back bar
+            self.ax.plot([x, x], [y - width/2, y + width/2], 
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             # Net strings (horizontal)
-            for i in range(5):
-                net_y = y - width/2 + i * (width / 4)
-                self.ax.plot([x - depth*0.5, x + depth], [net_y, net_y], 
-                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+            num_strings = 5
+            for i in range(num_strings):
+                net_y = y - width/2 + i * (width / (num_strings - 1))
+                self.ax.plot([x, x + depth], [net_y, net_y], 
+                            color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
-        elif rotation == 180:  # Faces SOUTH (down) - opening at bottom
-            # Posts
+        elif rotation == 180:  # Faces SOUTH (opening at bottom)
+            # Posts (vertical)
             self.ax.plot([x - width/2, x - width/2], [y, y - depth], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y - depth], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
-            # Curved back (arc at top)
-            arc = mpatches.Arc((x, y), width, depth * 1.5, angle=0,
-                              theta1=0, theta2=180,
-                              color=frame_color, lw=lw, zorder=6)
-            self.ax.add_patch(arc)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
+            # Back bar
+            self.ax.plot([x - width/2, x + width/2], [y, y], 
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             # Net strings (vertical)
-            for i in range(5):
-                net_x = x - width/2 + i * (width / 4)
-                self.ax.plot([net_x, net_x], [y - depth, y + depth*0.5], 
-                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+            num_strings = 5
+            for i in range(num_strings):
+                net_x = x - width/2 + i * (width / (num_strings - 1))
+                self.ax.plot([net_x, net_x], [y, y - depth], 
+                            color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
-        else:  # 270° - Faces WEST (left) - opening at left
-            # Posts
+        else:  # 270° - Faces WEST (opening at left)
+            # Posts (horizontal)
             self.ax.plot([x, x - depth], [y - width/2, y - width/2], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x - depth], [y + width/2, y + width/2], 
-                        color=frame_color, lw=lw, solid_capstyle='round', zorder=6)
-            # Curved back (arc on right)
-            arc = mpatches.Arc((x, y), depth * 1.5, width, angle=0,
-                              theta1=270, theta2=450,
-                              color=frame_color, lw=lw, zorder=6)
-            self.ax.add_patch(arc)
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
+            # Back bar
+            self.ax.plot([x, x], [y - width/2, y + width/2], 
+                        color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             # Net strings (horizontal)
-            for i in range(5):
-                net_y = y - width/2 + i * (width / 4)
-                self.ax.plot([x - depth, x + depth*0.5], [net_y, net_y], 
-                            color=net_color, lw=0.8, alpha=0.5, zorder=5)
+            num_strings = 5
+            for i in range(num_strings):
+                net_y = y - width/2 + i * (width / (num_strings - 1))
+                self.ax.plot([x, x - depth], [net_y, net_y], 
+                            color=net_color, lw=0.5, alpha=0.4, zorder=5)
     
     def draw_full_goal(self, goal):
         """
