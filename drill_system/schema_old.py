@@ -3,14 +3,10 @@ Soccer Drill Schema - Core data models using Pydantic.
 
 This module defines the complete type system for soccer drills.
 All drill definitions must conform to these schemas.
-
-UPDATES:
-- Added ConeLine model for connecting cones with lines
-- Added Animation and AnimationKeyframe models for dynamic diagrams
 """
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List, Optional, Literal, Union, Dict
+from typing import List, Optional, Literal, Union
 from enum import Enum
 
 
@@ -87,12 +83,6 @@ class Player(BaseModel):
 class Cone(BaseModel):
     """A single training cone"""
     position: Position
-
-
-class ConeLine(BaseModel):
-    """A line connecting two cones (by index) - rendered as orange boundary lines"""
-    from_cone: int = Field(ge=0, description="Index of the starting cone in the cones array")
-    to_cone: int = Field(ge=0, description="Index of the ending cone in the cones array")
 
 
 class ConeGate(BaseModel):
@@ -219,28 +209,6 @@ Action = Annotated[
 
 
 # ============================================================
-# ANIMATION
-# ============================================================
-
-class AnimationKeyframe(BaseModel):
-    """A single keyframe in an animation sequence"""
-    id: str = Field(description="Unique keyframe ID")
-    label: str = Field(default="", description="Human-readable label for this keyframe")
-    duration: int = Field(default=1000, ge=0, description="Duration in milliseconds to reach this keyframe")
-    easing: str = Field(default="ease-out", description="Easing function: linear, ease-in, ease-out, ease-in-out")
-    positions: Dict[str, Dict[str, float]] = Field(
-        default_factory=dict,
-        description="Entity positions at this keyframe. Keys are entity IDs (player IDs or ball_0, ball_1, etc.)"
-    )
-
-
-class Animation(BaseModel):
-    """Animation data for dynamic drill diagrams"""
-    duration: int = Field(default=0, ge=0, description="Total animation duration in milliseconds")
-    keyframes: List[AnimationKeyframe] = Field(default_factory=list, description="List of keyframes")
-
-
-# ============================================================
 # COMPLETE DRILL
 # ============================================================
 
@@ -262,19 +230,15 @@ class Drill(BaseModel):
     players: List[Player] = Field(default_factory=list)
     cones: List[Cone] = Field(default_factory=list)
     cone_gates: List[ConeGate] = Field(default_factory=list)
-    cone_lines: List[ConeLine] = Field(default_factory=list)  # Lines connecting cones
     balls: List[Ball] = Field(default_factory=list)
     mannequins: List[Mannequin] = Field(default_factory=list)
     
-    # Mini goals and full-size goals that can be placed anywhere
+    # NEW: Mini goals and full-size goals that can be placed anywhere
     mini_goals: List[MiniGoal] = Field(default_factory=list)
     goals: List[Goal] = Field(default_factory=list)
     
-    # Movement sequence (for static diagrams)
+    # Movement sequence
     actions: List[Action] = Field(default_factory=list)
-    
-    # Animation data (for dynamic diagrams)
-    animation: Optional[Animation] = Field(default=None, description="Animation data for dynamic diagrams")
     
     # Coaching information
     coaching_points: List[str] = Field(default_factory=list)
@@ -282,23 +246,10 @@ class Drill(BaseModel):
     
     @model_validator(mode='after')
     def validate_references(self):
-        """Ensure all player/gate/cone references exist"""
+        """Ensure all player/gate references in actions exist"""
         player_ids = {p.id for p in self.players}
         gate_ids = {g.id for g in self.cone_gates}
-        num_cones = len(self.cones)
         
-        # Validate cone_lines references
-        for i, cone_line in enumerate(self.cone_lines):
-            if cone_line.from_cone >= num_cones:
-                raise ValueError(
-                    f"ConeLine {i+1}: from_cone index {cone_line.from_cone} is out of range (only {num_cones} cones)"
-                )
-            if cone_line.to_cone >= num_cones:
-                raise ValueError(
-                    f"ConeLine {i+1}: to_cone index {cone_line.to_cone} is out of range (only {num_cones} cones)"
-                )
-        
-        # Validate actions
         for i, action in enumerate(self.actions):
             if isinstance(action, PassAction):
                 if action.from_player not in player_ids:
@@ -328,10 +279,6 @@ class Drill(BaseModel):
                     )
         
         return self
-    
-    def has_animation(self) -> bool:
-        """Check if this drill has animation data"""
-        return self.animation is not None and len(self.animation.keyframes) > 0
 
 
 # ============================================================

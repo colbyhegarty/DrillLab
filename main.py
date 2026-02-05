@@ -3,6 +3,11 @@ Soccer Drill Library API
 ========================
 Serves drill library data and renders SVG diagrams on-demand.
 
+UPDATES:
+- Added animation data support in API responses
+- drill_json now includes cone_lines and animation data
+- New has_animation flag in drill responses
+
 Endpoints:
 - GET /api/library - List all drills (metadata only)
 - GET /api/library/{id} - Get single drill with SVG
@@ -26,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent / "drill_system"))
 app = FastAPI(
     title="Soccer Drill Library API",
     description="API for soccer drill library with SVG diagram rendering",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # CORS - allow all origins for development
@@ -83,7 +88,8 @@ class DrillSummary(BaseModel):
     duration: Optional[str] = None
     difficulty: Optional[str] = None
     description: Optional[str] = None
-    svg: Optional[str] = None  # Base64 encoded SVG thumbnail
+    has_animation: bool = False
+    svg: Optional[str] = None
 
 class DrillFull(BaseModel):
     id: str
@@ -100,6 +106,7 @@ class DrillFull(BaseModel):
     coaching_points_text: Optional[str] = None
     source: Optional[str] = None
     source_url: Optional[str] = None
+    has_animation: bool = False
     drill_json: Optional[Dict] = None
 
 class LibraryListResponse(BaseModel):
@@ -110,7 +117,7 @@ class LibraryListResponse(BaseModel):
 class DrillDetailResponse(BaseModel):
     success: bool
     drill: DrillFull
-    svg: Optional[str] = None  # Base64 encoded SVG
+    svg: Optional[str] = None
 
 class CategoriesResponse(BaseModel):
     success: bool
@@ -136,6 +143,8 @@ def get_drill_json(drill: Dict) -> Optional[Dict]:
     Handles two formats:
     1. drill_json is nested: {"name": "...", "drill_json": {"field": ..., "players": ...}}
     2. drill_json is at root: {"name": "...", "field": ..., "players": ...}
+    
+    Now includes cone_lines and animation data.
     """
     # Check if drill_json is nested
     if drill.get('drill_json'):
@@ -150,16 +159,39 @@ def get_drill_json(drill: Dict) -> Optional[Dict]:
             "players": drill.get('players', []),
             "cones": drill.get('cones', []),
             "cone_gates": drill.get('cone_gates', []),
+            "cone_lines": drill.get('cone_lines', []),  # NEW: cone boundary lines
             "balls": drill.get('balls', []),
             "goals": drill.get('goals', []),
             "mini_goals": drill.get('mini_goals', []),
             "mannequins": drill.get('mannequins', []),
             "actions": drill.get('actions', []),
+            "animation": drill.get('animation'),  # NEW: animation data
             "coaching_points": drill.get('coaching_points', []),
             "variations": drill.get('variations', [])
         }
     
     return None
+
+
+def has_animation_data(drill: Dict) -> bool:
+    """Check if a drill has animation data"""
+    # Check at root level
+    animation = drill.get('animation')
+    if animation and isinstance(animation, dict):
+        keyframes = animation.get('keyframes', [])
+        if keyframes and len(keyframes) > 0:
+            return True
+    
+    # Check in drill_json
+    drill_json = drill.get('drill_json')
+    if drill_json:
+        animation = drill_json.get('animation')
+        if animation and isinstance(animation, dict):
+            keyframes = animation.get('keyframes', [])
+            if keyframes and len(keyframes) > 0:
+                return True
+    
+    return False
 
 
 def render_drill_svg(drill_json: Dict) -> Optional[str]:
@@ -242,13 +274,19 @@ def clean_coaching_points(text: str) -> str:
             break  # Stop processing, ignore this and all following lines
         
         if line.strip():
-            clean_lines.append(line)
+            # Clean up bullet points
+            cleaned = line.strip()
+            if cleaned.startswith('*'):
+                cleaned = cleaned[1:].strip()
+            if not cleaned.startswith('•'):
+                cleaned = '• ' + cleaned
+            clean_lines.append(cleaned)
     
     return '\n'.join(clean_lines)
 
 
 def clean_instructions(text: str) -> str:
-    """Format instructions as bullet points, removing leading numbers"""
+    """Clean instruction text"""
     if not text:
         return text
     
@@ -256,14 +294,19 @@ def clean_instructions(text: str) -> str:
     clean_lines = []
     
     for line in lines:
-        stripped = line.strip()
-        if stripped:
-            # Remove leading numbers like "1.", "2)", "1 ", etc.
-            import re
-            cleaned = re.sub(r'^\d+[\.\)\s]+', '', stripped)
-            clean_lines.append('• ' + cleaned)
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Skip footer content
+        line_lower = line.lower()
+        if any(kw in line_lower for kw in ['drill equipment', 'drill ages', 'soccerxpert']):
+            break
+        
+        clean_lines.append(line)
     
     return '\n'.join(clean_lines)
+
 
 def drill_to_summary(drill: Dict, index: int, include_svg: bool = False) -> DrillSummary:
     """Convert drill dict to summary"""
@@ -282,6 +325,7 @@ def drill_to_summary(drill: Dict, index: int, include_svg: bool = False) -> Dril
         duration=drill.get('duration'),
         difficulty=drill.get('difficulty'),
         description=drill.get('description', '')[:200] if drill.get('description') else None,
+        has_animation=has_animation_data(drill),
         svg=svg
     )
 
@@ -302,6 +346,7 @@ def drill_to_full(drill: Dict, index: int) -> DrillFull:
         coaching_points_text=clean_coaching_points(drill.get('coaching_points_text')),
         source=drill.get('source'),
         source_url=drill.get('source_url'),
+        has_animation=has_animation_data(drill),
         drill_json=get_drill_json(drill)
     )
 
@@ -362,6 +407,14 @@ def matches_filter(drill: Dict, filters: Dict) -> bool:
         if search not in name and search not in desc:
             return False
     
+    # Has animation filter
+    if filters.get('has_animation') is not None:
+        drill_has_anim = has_animation_data(drill)
+        if filters['has_animation'] and not drill_has_anim:
+            return False
+        if not filters['has_animation'] and drill_has_anim:
+            return False
+    
     return True
 
 # ============================================================
@@ -375,7 +428,7 @@ async def health_check():
     library = load_library()
     return HealthResponse(
         status="healthy",
-        version="2.0.0",
+        version="2.1.0",
         drill_count=len(library)
     )
 
@@ -440,6 +493,7 @@ async def filter_drills(
     max_players: Optional[int] = Query(None, description="Maximum number of players"),
     difficulty: Optional[str] = Query(None, description="Filter by difficulty (EASY, MEDIUM, HARD)"),
     search: Optional[str] = Query(None, description="Search in name and description"),
+    has_animation: Optional[bool] = Query(None, description="Filter by animation availability"),
     include_svg: bool = Query(True, description="Include SVG diagrams in response")
 ):
     """Filter drills by various criteria"""
@@ -451,7 +505,8 @@ async def filter_drills(
         'min_players': min_players,
         'max_players': max_players,
         'difficulty': difficulty,
-        'search': search
+        'search': search,
+        'has_animation': has_animation
     }
     
     # Remove None values
