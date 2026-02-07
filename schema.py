@@ -1,0 +1,407 @@
+"""
+Soccer Drill Schema - Core data models using Pydantic.
+
+This module defines the complete type system for soccer drills.
+All drill definitions must conform to these schemas.
+
+UPDATES:
+- Added ConeLine model for connecting cones with lines
+- Added Animation and AnimationKeyframe models for dynamic diagrams
+"""
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import List, Optional, Literal, Union, Dict
+from enum import Enum
+
+
+# ============================================================
+# ENUMS
+# ============================================================
+
+class FieldType(str, Enum):
+    HALF = "HALF"
+    FULL = "FULL"
+
+
+class AttackingDirection(str, Enum):
+    NORTH = "NORTH"  # Attacking toward top of diagram (y=100)
+    SOUTH = "SOUTH"  # Attacking toward bottom of diagram (y=0)
+
+
+class PlayerRole(str, Enum):
+    ATTACKER = "ATTACKER"
+    DEFENDER = "DEFENDER"
+    GOALKEEPER = "GOALKEEPER"
+    NEUTRAL = "NEUTRAL"
+
+
+class GateOrientation(str, Enum):
+    HORIZONTAL = "HORIZONTAL"
+    VERTICAL = "VERTICAL"
+
+
+# ============================================================
+# CORE TYPES
+# ============================================================
+
+class Position(BaseModel):
+    """
+    Absolute position on the field using normalized 0-100 coordinates.
+    
+    Coordinate system:
+    - x: 0 = left sideline, 100 = right sideline, 50 = center
+    - y: 0 = bottom of diagram, 100 = top of diagram
+    """
+    x: float = Field(ge=0, le=100, description="X position (0=left, 100=right)")
+    y: float = Field(ge=0, le=100, description="Y position (0=bottom, 100=top)")
+
+
+class FieldConfig(BaseModel):
+    """Soccer field configuration"""
+    type: FieldType = Field(default=FieldType.HALF)
+    attacking_direction: AttackingDirection = Field(default=AttackingDirection.NORTH)
+    markings: bool = Field(default=True)
+    goals: Literal[0, 1, 2] = Field(default=1)
+
+
+# ============================================================
+# ENTITIES
+# ============================================================
+
+class Player(BaseModel):
+    """A player on the field"""
+    id: str = Field(
+        pattern=r"^[A-Z]+[0-9]*$",
+        description="Player ID (e.g., A1, D2, GK)"
+    )
+    role: PlayerRole
+    position: Position
+    label: Optional[str] = Field(default=None, description="Optional display label")
+
+    @field_validator('id')
+    @classmethod
+    def uppercase_id(cls, v):
+        return v.upper()
+
+
+class Cone(BaseModel):
+    """A single training cone"""
+    position: Position
+
+
+class ConeLine(BaseModel):
+    """A line connecting two cones (by index) - rendered as orange boundary lines"""
+    from_cone: int = Field(ge=0, description="Index of the starting cone in the cones array")
+    to_cone: int = Field(ge=0, description="Index of the ending cone in the cones array")
+
+
+class ConeGate(BaseModel):
+    """A gate formed by two cones"""
+    id: str = Field(pattern=r"^[A-Z]+[0-9]*$")
+    center: Position
+    width: float = Field(gt=0, le=30, description="Width of gate in units")
+    orientation: GateOrientation
+
+    @field_validator('id')
+    @classmethod
+    def uppercase_id(cls, v):
+        return v.upper()
+
+
+class Ball(BaseModel):
+    """Ball position"""
+    position: Position
+
+
+class Mannequin(BaseModel):
+    """A training mannequin/dummy for simulating defenders"""
+    id: str = Field(pattern=r"^[A-Z]+[0-9]*$", description="Mannequin ID (e.g., M1, M2)")
+    position: Position
+
+    @field_validator('id')
+    @classmethod
+    def uppercase_id(cls, v):
+        return v.upper()
+
+
+class MiniGoal(BaseModel):
+    """A mini/pugg goal that can be placed anywhere on the field"""
+    position: Position
+    rotation: int = Field(default=0, description="Rotation in degrees (0, 90, 180, 270)")
+    
+    @field_validator('rotation')
+    @classmethod
+    def validate_rotation(cls, v):
+        # Normalize to 0, 90, 180, 270
+        return v % 360
+
+
+class Goal(BaseModel):
+    """A full-size goal that can be placed anywhere on the field"""
+    position: Position
+    rotation: int = Field(default=0, description="Rotation in degrees (0, 90, 180, 270)")
+    
+    @field_validator('rotation')
+    @classmethod
+    def validate_rotation(cls, v):
+        # Normalize to 0, 90, 180, 270
+        return v % 360
+
+
+# ============================================================
+# ACTIONS
+# ============================================================
+
+class PassAction(BaseModel):
+    """Ball pass from one player to another"""
+    type: Literal["PASS"] = "PASS"
+    from_player: str = Field(description="Player ID passing the ball")
+    to_player: str = Field(description="Player ID receiving the ball")
+
+    @field_validator('from_player', 'to_player')
+    @classmethod
+    def uppercase_players(cls, v):
+        return v.upper()
+
+
+class RunAction(BaseModel):
+    """Player movement without the ball"""
+    type: Literal["RUN"] = "RUN"
+    player: str = Field(description="Player ID making the run")
+    to_position: Position = Field(description="Destination position")
+
+    @field_validator('player')
+    @classmethod
+    def uppercase_player(cls, v):
+        return v.upper()
+
+
+class DribbleAction(BaseModel):
+    """Player dribbling with the ball"""
+    type: Literal["DRIBBLE"] = "DRIBBLE"
+    player: str = Field(description="Player ID dribbling")
+    to_position: Position = Field(description="Destination position")
+    through_gate: Optional[str] = Field(default=None, description="Cone gate ID if dribbling through one")
+
+    @field_validator('player')
+    @classmethod
+    def uppercase_player(cls, v):
+        return v.upper()
+
+    @field_validator('through_gate')
+    @classmethod
+    def uppercase_gate(cls, v):
+        return v.upper() if v else None
+
+
+class ShotAction(BaseModel):
+    """Shot toward a target position or goal"""
+    type: Literal["SHOT"] = "SHOT"
+    player: str = Field(description="Player ID taking the shot")
+    # Support both old format (target: "GOAL") and new format (to_position)
+    target: Optional[Literal["GOAL"]] = Field(default=None, description="Legacy: 'GOAL' for auto-aim at goal")
+    to_position: Optional[Position] = Field(default=None, description="Target position for the shot")
+
+    @field_validator('player')
+    @classmethod
+    def uppercase_player(cls, v):
+        return v.upper()
+
+
+# Union type for all actions - use 'type' field as discriminator
+from typing import Annotated
+from pydantic import Field as PydanticField
+
+Action = Annotated[
+    Union[PassAction, RunAction, DribbleAction, ShotAction],
+    PydanticField(discriminator='type')
+]
+
+
+# ============================================================
+# ANIMATION
+# ============================================================
+
+class AnimationKeyframe(BaseModel):
+    """A single keyframe in an animation sequence"""
+    id: str = Field(description="Unique keyframe ID")
+    label: str = Field(default="", description="Human-readable label for this keyframe")
+    duration: int = Field(default=1000, ge=0, description="Duration in milliseconds to reach this keyframe")
+    easing: str = Field(default="ease-out", description="Easing function: linear, ease-in, ease-out, ease-in-out")
+    positions: Dict[str, Dict[str, float]] = Field(
+        default_factory=dict,
+        description="Entity positions at this keyframe. Keys are entity IDs (player IDs or ball_0, ball_1, etc.)"
+    )
+
+
+class Animation(BaseModel):
+    """Animation data for dynamic drill diagrams"""
+    duration: int = Field(default=0, ge=0, description="Total animation duration in milliseconds")
+    keyframes: List[AnimationKeyframe] = Field(default_factory=list, description="List of keyframes")
+
+
+# ============================================================
+# COMPLETE DRILL
+# ============================================================
+
+class Drill(BaseModel):
+    """
+    Complete drill definition.
+    
+    This is the primary data structure that represents a soccer drill.
+    It contains all information needed to render the diagram and
+    provide coaching instructions.
+    """
+    name: str = Field(description="Name of the drill")
+    description: str = Field(default="", description="Brief description of drill purpose")
+    
+    # Field setup
+    field: FieldConfig = Field(default_factory=FieldConfig)
+    
+    # Entities
+    players: List[Player] = Field(default_factory=list)
+    cones: List[Cone] = Field(default_factory=list)
+    cone_gates: List[ConeGate] = Field(default_factory=list)
+    cone_lines: List[ConeLine] = Field(default_factory=list)  # Lines connecting cones
+    balls: List[Ball] = Field(default_factory=list)
+    mannequins: List[Mannequin] = Field(default_factory=list)
+    
+    # Mini goals and full-size goals that can be placed anywhere
+    mini_goals: List[MiniGoal] = Field(default_factory=list)
+    goals: List[Goal] = Field(default_factory=list)
+    
+    # Movement sequence (for static diagrams)
+    actions: List[Action] = Field(default_factory=list)
+    
+    # Animation data (for dynamic diagrams)
+    animation: Optional[Animation] = Field(default=None, description="Animation data for dynamic diagrams")
+    
+    # Coaching information
+    coaching_points: List[str] = Field(default_factory=list)
+    variations: List[str] = Field(default_factory=list)
+    
+    @model_validator(mode='after')
+    def validate_references(self):
+        """Ensure all player/gate/cone references exist"""
+        player_ids = {p.id for p in self.players}
+        gate_ids = {g.id for g in self.cone_gates}
+        num_cones = len(self.cones)
+        
+        # Validate cone_lines references
+        for i, cone_line in enumerate(self.cone_lines):
+            if cone_line.from_cone >= num_cones:
+                raise ValueError(
+                    f"ConeLine {i+1}: from_cone index {cone_line.from_cone} is out of range (only {num_cones} cones)"
+                )
+            if cone_line.to_cone >= num_cones:
+                raise ValueError(
+                    f"ConeLine {i+1}: to_cone index {cone_line.to_cone} is out of range (only {num_cones} cones)"
+                )
+        
+        # Validate actions
+        for i, action in enumerate(self.actions):
+            if isinstance(action, PassAction):
+                if action.from_player not in player_ids:
+                    raise ValueError(
+                        f"Action {i+1}: from_player '{action.from_player}' not found in players"
+                    )
+                if action.to_player not in player_ids:
+                    raise ValueError(
+                        f"Action {i+1}: to_player '{action.to_player}' not found in players"
+                    )
+            
+            elif isinstance(action, (RunAction, DribbleAction)):
+                if action.player not in player_ids:
+                    raise ValueError(
+                        f"Action {i+1}: player '{action.player}' not found in players"
+                    )
+                if isinstance(action, DribbleAction) and action.through_gate:
+                    if action.through_gate not in gate_ids:
+                        raise ValueError(
+                            f"Action {i+1}: through_gate '{action.through_gate}' not found in cone_gates"
+                        )
+            
+            elif isinstance(action, ShotAction):
+                if action.player not in player_ids:
+                    raise ValueError(
+                        f"Action {i+1}: player '{action.player}' not found in players"
+                    )
+        
+        return self
+    
+    def has_animation(self) -> bool:
+        """Check if this drill has animation data"""
+        return self.animation is not None and len(self.animation.keyframes) > 0
+
+
+# ============================================================
+# COACH INPUT
+# ============================================================
+
+class CoachConstraints(BaseModel):
+    """Constraints specified by the coach for drill generation"""
+    num_players: int = Field(ge=2, le=22, description="Total number of players")
+    num_attackers: Optional[int] = Field(default=None, ge=0)
+    num_defenders: Optional[int] = Field(default=None, ge=0)
+    has_goalkeeper: bool = Field(default=False)
+    
+    has_cones: bool = Field(default=True)
+    num_cones: Optional[int] = Field(default=None, ge=0)
+    
+    field_size: FieldType = Field(default=FieldType.HALF)
+    
+    age_group: Optional[str] = Field(default=None, description="e.g., U10, U14, Adult")
+    skill_level: Optional[Literal["beginner", "intermediate", "advanced"]] = None
+    
+    duration_minutes: Optional[int] = Field(default=None, ge=5, le=60)
+
+
+class CoachRequest(BaseModel):
+    """Complete request from a coach to generate a drill"""
+    goal: str = Field(description="Primary goal (e.g., 'finishing under pressure')")
+    secondary_goals: List[str] = Field(default_factory=list)
+    constraints: CoachConstraints
+    additional_notes: Optional[str] = None
+
+
+# ============================================================
+# REFERENCE POSITIONS
+# ============================================================
+
+def get_reference_positions(attacking_direction: AttackingDirection) -> dict:
+    """
+    Returns common reference positions for the LLM to use.
+    
+    These positions help the LLM place entities correctly without
+    needing to calculate coordinates manually.
+    """
+    if attacking_direction == AttackingDirection.NORTH:
+        return {
+            "goal_line_center": {"x": 50, "y": 100},
+            "penalty_spot": {"x": 50, "y": 88},
+            "top_of_18_yard_box": {"x": 50, "y": 82},
+            "top_of_6_yard_box": {"x": 50, "y": 94},
+            "left_post": {"x": 44, "y": 100},
+            "right_post": {"x": 56, "y": 100},
+            "left_edge_18": {"x": 30, "y": 82},
+            "right_edge_18": {"x": 70, "y": 82},
+            "center_circle": {"x": 50, "y": 50},
+            "halfway_line_center": {"x": 50, "y": 50},
+            "own_goal": {"x": 50, "y": 0},
+            "own_penalty_spot": {"x": 50, "y": 12},
+        }
+    else:  # SOUTH
+        return {
+            "goal_line_center": {"x": 50, "y": 0},
+            "penalty_spot": {"x": 50, "y": 12},
+            "top_of_18_yard_box": {"x": 50, "y": 18},
+            "top_of_6_yard_box": {"x": 50, "y": 6},
+            "left_post": {"x": 44, "y": 0},
+            "right_post": {"x": 56, "y": 0},
+            "left_edge_18": {"x": 30, "y": 18},
+            "right_edge_18": {"x": 70, "y": 18},
+            "center_circle": {"x": 50, "y": 50},
+            "halfway_line_center": {"x": 50, "y": 50},
+            "own_goal": {"x": 50, "y": 100},
+            "own_penalty_spot": {"x": 50, "y": 88},
+        }

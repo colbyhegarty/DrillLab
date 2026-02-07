@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1v1, 1v2, 2v2 - 4 Goal Game</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 10px; }
+        .canvas-wrapper { background: #2d4a2d; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        #field-canvas { display: block; margin: 0 auto; border-radius: 8px; max-width: 100%; height: auto; }
+        .controls { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .playback-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .playback-btn { width: 40px; height: 40px; border: 2px solid #3d5a3d; border-radius: 8px; background: #fff; color: #3d5a3d; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .playback-btn:hover { background: #f0f4f0; }
+        .playback-btn.play-btn { width: 50px; height: 50px; background: #3d5a3d; color: #fff; border-radius: 50%; }
+        .progress-container { flex: 1; min-width: 150px; display: flex; align-items: center; gap: 10px; }
+        .progress-bar { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; cursor: pointer; }
+        .progress-fill { height: 100%; background: #3d5a3d; border-radius: 4px; width: 0%; }
+        .time-display { font-size: 14px; color: #666; min-width: 80px; text-align: right; }
+        .options-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .speed-select { padding: 8px 12px; border: 2px solid #3d5a3d; border-radius: 8px; background: #fff; color: #3d5a3d; font-size: 14px; }
+        .loop-btn { padding: 8px 16px; border: 2px solid #3d5a3d; border-radius: 8px; background: #fff; color: #3d5a3d; cursor: pointer; font-size: 14px; }
+        .loop-btn.active { background: #3d5a3d; color: #fff; }
+        .keyframe-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .keyframe-btn { padding: 8px 16px; border: 2px solid #3d5a3d; border-radius: 20px; background: #fff; color: #3d5a3d; cursor: pointer; font-size: 13px; }
+        .keyframe-btn.active { background: #3d5a3d; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="field-canvas" width="800" height="600"></canvas>
+        </div>
+        <div class="controls">
+            <div class="playback-row">
+                <button class="playback-btn" onclick="goToStart()">â®</button>
+                <button class="playback-btn" onclick="prevKeyframe()">âª</button>
+                <button class="playback-btn play-btn" id="play-btn" onclick="togglePlay()">â–¶</button>
+                <button class="playback-btn" onclick="nextKeyframe()">â©</button>
+                <button class="playback-btn" onclick="goToEnd()">â­</button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" onclick="seekProgress(event)">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="time-display" id="time-display">0:00 / 0:00</div>
+                </div>
+            </div>
+            <div class="options-row">
+                <select class="speed-select" id="speed-select" onchange="updateSpeed()">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+                <button class="loop-btn active" id="loop-btn" onclick="toggleLoop()">ðŸ”„ Loop On</button>
+            </div>
+            <div class="keyframe-row" id="keyframe-row"></div>
+        </div>
+    </div>
+    <script>
+        const drill = {"name": "1v1, 1v2, 2v2 - 4 Goal Game", "description": "1v1, 1v2, 2v2 - 4 goal game1v1, 1v2, 2v2, Soccer 4 Goal GameImagePrint1V1, 1V2, 2V2, SOCCER 4 GOAL GAMEDrill Quick GlanceAge: 9+Field: 20X35Players: 8+Focus: SMALL SIDEDDifficulty: MEDIUMTime: 20 MINS.Goalkeeper: NOTeamRating: 3.92 / 5Views: 121,891Published: 11/30/2008Author: Chris JohnsonDrill ObjectiveThis 1v1, 2v2 to multiple goals soccer drill puts soccer players in 1v1 and 2v2 situations with multiple goals. 1v1 soccer helps players focus on penetration by forcing the player to dribble to ", "field": {"type": "FULL", "goals": 0, "markings": false, "attacking_direction": "NORTH"}, "players": [{"id": "A1", "role": "ATTACKER", "position": {"x": 34, "y": 26}}, {"id": "A2", "role": "ATTACKER", "position": {"x": 66, "y": 26}}, {"id": "D1", "role": "DEFENDER", "position": {"x": 35, "y": 80}}, {"id": "D2", "role": "DEFENDER", "position": {"x": 63, "y": 80}}], "cones": [{"position": {"x": 10, "y": 80}}, {"position": {"x": 90, "y": 80}}, {"position": {"x": 10, "y": 25}}, {"position": {"x": 90, "y": 25}}], "cone_gates": [], "cone_lines": [{"to_cone": 2, "from_cone": 0}, {"to_cone": 3, "from_cone": 2}, {"to_cone": 1, "from_cone": 3}, {"to_cone": 0, "from_cone": 1}], "balls": [{"position": {"x": 35, "y": 78}}, {"position": {"x": 63, "y": 78}}], "goals": [], "mini_goals": [{"position": {"x": 17, "y": 82}, "rotation": 0}, {"position": {"x": 83, "y": 82}, "rotation": 0}, {"position": {"x": 83, "y": 23}, "rotation": 180}, {"position": {"x": 17, "y": 23}, "rotation": 180}], "mannequins": [], "actions": [{"type": "PASS", "to_player": "A1", "from_player": "D1"}, {"type": "PASS", "to_player": "A2", "from_player": "D2"}, {"type": "DRIBBLE", "player": "A2", "to_position": {"x": 25, "y": 55}}, {"type": "DRIBBLE", "player": "A1", "to_position": {"x": 51, "y": 55}}, {"type": "DRIBBLE", "player": "A1", "to_position": {"x": 80, "y": 65}}, {"type": "RUN", "player": "D1", "to_position": {"x": 49, "y": 61}}, {"type": "RUN", "player": "D2", "to_position": {"x": 53, "y": 73}}], "coaching_points": [], "variations": [], "animation": {"duration": 8000, "keyframes": [{"id": "kf_89ktrph84", "label": "Starting Position", "easing": "ease-out", "duration": 0, "positions": {"A1": {"x": 34, "y": 26}, "A2": {"x": 66, "y": 26}, "D1": {"x": 35, "y": 80}, "D2": {"x": 63, "y": 80}, "ball_0": {"x": 35, "y": 78}, "ball_1": {"x": 63, "y": 78}}}, {"id": "kf_nqhgdrxd1", "label": "Step 1", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 34, "y": 26}, "A2": {"x": 66, "y": 26}, "D1": {"x": 35, "y": 80}, "D2": {"x": 63, "y": 80}, "ball_0": {"x": 35, "y": 27}, "ball_1": {"x": 65, "y": 27}}}, {"id": "kf_kdjg8lpsm", "label": "Step 2", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 53, "y": 44}, "A2": {"x": 45, "y": 35}, "D1": {"x": 58, "y": 58}, "D2": {"x": 44, "y": 50}, "ball_0": {"x": 55, "y": 45}, "ball_1": {"x": 44, "y": 36}}}, {"id": "kf_jzhz1z3ib", "label": "Step 3", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 58, "y": 50}, "A2": {"x": 34, "y": 44}, "D1": {"x": 59, "y": 56}, "D2": {"x": 36, "y": 50}, "ball_0": {"x": 57, "y": 52}, "ball_1": {"x": 33, "y": 46}}}, {"id": "kf_7ylnkae3u", "label": "Step 4", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 50, "y": 55}, "A2": {"x": 29, "y": 47}, "D1": {"x": 56, "y": 55}, "D2": {"x": 30, "y": 50}, "ball_0": {"x": 51, "y": 56}, "ball_1": {"x": 26, "y": 47}}}, {"id": "kf_dfw2p699g", "label": "Step 5", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 61, "y": 63}, "A2": {"x": 17, "y": 47}, "D1": {"x": 60, "y": 59}, "D2": {"x": 22, "y": 49}, "ball_0": {"x": 62, "y": 64}, "ball_1": {"x": 17, "y": 49}}}, {"id": "kf_n6pwaapvn", "label": "Step 6", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 76, "y": 70}, "A2": {"x": 17, "y": 62}, "D1": {"x": 72, "y": 74}, "D2": {"x": 20, "y": 60}, "ball_0": {"x": 78, "y": 71}, "ball_1": {"x": 17, "y": 64}}}, {"id": "kf_xw3m9hszb", "label": "Step 7", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 76, "y": 70}, "A2": {"x": 17, "y": 70}, "D1": {"x": 72, "y": 74}, "D2": {"x": 20, "y": 66}, "ball_0": {"x": 83, "y": 80}, "ball_1": {"x": 17, "y": 72}}}, {"id": "kf_rkus75asm", "label": "Step 8", "easing": "ease-out", "duration": 1000, "positions": {"A1": {"x": 76, "y": 70}, "A2": {"x": 17, "y": 70}, "D1": {"x": 72, "y": 74}, "D2": {"x": 20, "y": 66}, "ball_0": {"x": 83, "y": 80}, "ball_1": {"x": 17, "y": 80}}}]}};
+        const state = {
+            keyframes: drill.animation?.keyframes || [],
+            isPlaying: false, playbackSpeed: 1, currentTime: 0, totalDuration: 0,
+            lastTimestamp: null, animationFrameId: null, selectedKeyframeIndex: 0, looping: true
+        };
+        const canvas = document.getElementById('field-canvas');
+        const ctx = canvas.getContext('2d');
+        const FIELD_PADDING = 50, FIELD_WIDTH = canvas.width - 100, FIELD_HEIGHT = canvas.height - 100;
+        
+        for (let i = 1; i < state.keyframes.length; i++) state.totalDuration += state.keyframes[i].duration || 1000;
+        
+        function toCanvas(x, y) { return { x: FIELD_PADDING + (x / 100) * FIELD_WIDTH, y: FIELD_PADDING + ((100 - y) / 100) * FIELD_HEIGHT }; }
+        
+        function getStartingPositions() {
+            const pos = {};
+            drill.players?.forEach(p => pos[p.id] = { x: p.position.x, y: p.position.y });
+            drill.balls?.forEach((b, i) => pos['ball_' + i] = { x: b.position.x, y: b.position.y });
+            return pos;
+        }
+        
+        function getPositionsAtKeyframe(idx) {
+            let pos = getStartingPositions();
+            for (let i = 0; i <= idx && i < state.keyframes.length; i++) {
+                const kf = state.keyframes[i];
+                if (kf.positions) Object.entries(kf.positions).forEach(([id, p]) => pos[id] = { ...p });
+            }
+            return pos;
+        }
+        
+        function getPositionsAtTime(time) {
+            if (state.keyframes.length === 0) return getStartingPositions();
+            const times = []; let cum = 0;
+            for (let i = 0; i < state.keyframes.length; i++) { times.push(cum); if (i < state.keyframes.length - 1) cum += state.keyframes[i + 1].duration || 1000; }
+            let from = 0;
+            for (let i = 0; i < times.length; i++) if (time >= times[i]) from = i;
+            let to = Math.min(from + 1, state.keyframes.length - 1);
+            if (from >= state.keyframes.length - 1 || from === to) return getPositionsAtKeyframe(state.keyframes.length - 1);
+            const segDur = times[to] - times[from];
+            if (segDur <= 0) return getPositionsAtKeyframe(from);
+            const prog = Math.min(1, Math.max(0, (time - times[from]) / segDur));
+            const fromPos = getPositionsAtKeyframe(from), toPos = getPositionsAtKeyframe(to);
+            const ease = state.keyframes[to]?.easing || 'linear';
+            const e = ease === 'ease-in' ? prog*prog : ease === 'ease-out' ? 1-(1-prog)*(1-prog) : ease === 'ease-in-out' ? (prog < 0.5 ? 2*prog*prog : 1-Math.pow(-2*prog+2,2)/2) : prog;
+            const interp = {};
+            Object.keys(fromPos).forEach(id => { const f = fromPos[id], t = toPos[id] || f; interp[id] = { x: f.x + (t.x - f.x) * e, y: f.y + (t.y - f.y) * e }; });
+            return interp;
+        }
+        
+        function draw(positions = null) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!positions) positions = state.isPlaying ? getPositionsAtTime(state.currentTime) : getPositionsAtKeyframe(state.selectedKeyframeIndex);
+            drawField(); drawConeLines(); drawCones(); drawGoals(); drawMiniGoals(); drawPlayers(positions); drawBalls(positions);
+        }
+        
+        function drawField() {
+            const p = FIELD_PADDING, w = FIELD_WIDTH, h = FIELD_HEIGHT;
+            ctx.fillStyle = '#63b043'; ctx.fillRect(p, p, w, h);
+            for (let i = 0; i < 10; i++) { ctx.fillStyle = i % 2 === 0 ? '#6fbf4a' : '#63b043'; ctx.fillRect(p + i * (w/10), p, w/10, h); }
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5; ctx.strokeRect(p, p, w, h);
+            if (drill.field?.markings !== false) {
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5;
+                const cy = toCanvas(50, 50).y; ctx.beginPath(); ctx.moveTo(p, cy); ctx.lineTo(p + w, cy); ctx.stroke();
+                const c = toCanvas(50, 50); ctx.beginPath(); ctx.arc(c.x, c.y, (10/100) * w, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(c.x, c.y, 3, 0, Math.PI * 2); ctx.fill();
+                const fg = drill.field?.goals || 0;
+                drawGoalArea(100, fg >= 1); if (drill.field?.type === 'FULL') drawGoalArea(0, fg >= 2);
+            }
+        }
+        
+        function drawGoalArea(goalY, dg) {
+            const into = goalY === 100 ? -1 : 1;
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5;
+            const bt = toCanvas(30, goalY + into * 18), bb = toCanvas(70, goalY);
+            ctx.strokeRect(bt.x, Math.min(bt.y, bb.y), toCanvas(70, 0).x - toCanvas(30, 0).x, Math.abs(bt.y - bb.y));
+            const st = toCanvas(42, goalY + into * 6), sb = toCanvas(58, goalY);
+            ctx.strokeRect(st.x, Math.min(st.y, sb.y), toCanvas(58, 0).x - toCanvas(42, 0).x, Math.abs(st.y - sb.y));
+            const ps = toCanvas(50, goalY + into * 12); ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(ps.x, ps.y, 3, 0, Math.PI * 2); ctx.fill();
+            if (dg) {
+                const pos = toCanvas(50, goalY), gw = (8/100) * FIELD_WIDTH, gd = (3/100) * FIELD_HEIGHT;
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+                if (goalY === 100) {
+                    ctx.beginPath(); ctx.moveTo(pos.x - gw/2, pos.y); ctx.lineTo(pos.x - gw/2, pos.y - gd); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pos.x + gw/2, pos.y); ctx.lineTo(pos.x + gw/2, pos.y - gd); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pos.x - gw/2, pos.y - gd); ctx.lineTo(pos.x + gw/2, pos.y - gd); ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.moveTo(pos.x - gw/2, pos.y); ctx.lineTo(pos.x - gw/2, pos.y + gd); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pos.x + gw/2, pos.y); ctx.lineTo(pos.x + gw/2, pos.y + gd); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(pos.x - gw/2, pos.y + gd); ctx.lineTo(pos.x + gw/2, pos.y + gd); ctx.stroke();
+                }
+            }
+        }
+        
+        function drawConeLines() {
+            if (!drill.cone_lines) return;
+            const cones = drill.cones || [];
+            drill.cone_lines.forEach(l => {
+                if (l.from_cone < cones.length && l.to_cone < cones.length) {
+                    const f = toCanvas(cones[l.from_cone].position.x, cones[l.from_cone].position.y);
+                    const t = toCanvas(cones[l.to_cone].position.x, cones[l.to_cone].position.y);
+                    ctx.strokeStyle = '#f4a261'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+                }
+            });
+        }
+        
+        function drawCones() {
+            if (!drill.cones) return;
+            drill.cones.forEach(c => {
+                const pos = toCanvas(c.position.x, c.position.y);
+                ctx.fillStyle = '#f4a261'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y - 8); ctx.lineTo(pos.x - 6, pos.y + 5); ctx.lineTo(pos.x + 6, pos.y + 5); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 0.8; ctx.stroke();
+            });
+        }
+        
+        function drawGoals() {
+            if (!drill.goals) return;
+            drill.goals.forEach(g => {
+                const pos = toCanvas(g.position.x, g.position.y), rot = g.rotation || 0;
+                const gw = (8/100) * FIELD_WIDTH, gd = (3/100) * FIELD_HEIGHT;
+                ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate((rot * Math.PI) / 180);
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(-gw/2, gd/2); ctx.lineTo(-gw/2, -gd/2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(gw/2, gd/2); ctx.lineTo(gw/2, -gd/2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-gw/2, -gd/2); ctx.lineTo(gw/2, -gd/2); ctx.stroke();
+                ctx.restore();
+            });
+        }
+        
+        function drawMiniGoals() {
+            if (!drill.mini_goals) return;
+            drill.mini_goals.forEach(g => {
+                const pos = toCanvas(g.position.x, g.position.y), rot = ((g.rotation || 0) + 180) % 360;
+                const gw = (4/100) * FIELD_WIDTH, gd = (2/100) * FIELD_HEIGHT;
+                ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate((rot * Math.PI) / 180);
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(-gw/2, gd/2); ctx.lineTo(-gw/2, -gd/2); ctx.lineTo(gw/2, -gd/2); ctx.lineTo(gw/2, gd/2); ctx.stroke();
+                ctx.restore();
+            });
+        }
+        
+        function drawPlayers(positions) {
+            if (!drill.players) return;
+            const colors = { 'ATTACKER': '#e63946', 'DEFENDER': '#457b9d', 'GOALKEEPER': '#f1fa3c', 'NEUTRAL': '#f4a261' };
+            drill.players.forEach(p => {
+                const pd = positions[p.id] || p.position, pos = toCanvas(pd.x, pd.y);
+                ctx.fillStyle = colors[p.role] || '#888'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(pos.x, pos.y, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText(p.id, pos.x, pos.y + 16);
+            });
+        }
+        
+        function drawBalls(positions) {
+            if (!drill.balls) return;
+            drill.balls.forEach((b, i) => {
+                const pd = positions['ball_' + i] || b.position, pos = toCanvas(pd.x, pd.y);
+                ctx.fillStyle = '#fff'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#000'; ctx.beginPath();
+                for (let j = 0; j < 5; j++) { const a = (j * 72 - 90) * Math.PI / 180, px = pos.x + 5 * Math.cos(a), py = pos.y + 5 * Math.sin(a); if (j === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+                ctx.closePath(); ctx.fill();
+            });
+        }
+        
+        function togglePlay() { if (state.isPlaying) stopPlayback(); else startPlayback(); }
+        function startPlayback() {
+            if (state.keyframes.length < 2) return;
+            if (state.currentTime >= state.totalDuration) state.currentTime = 0;
+            state.isPlaying = true; state.lastTimestamp = null;
+            document.getElementById('play-btn').textContent = 'â¸';
+            state.animationFrameId = requestAnimationFrame(animationLoop);
+            updateKeyframeButtons();
+        }
+        function stopPlayback() {
+            state.isPlaying = false;
+            if (state.animationFrameId) cancelAnimationFrame(state.animationFrameId);
+            document.getElementById('play-btn').textContent = 'â–¶';
+        }
+        function animationLoop(ts) {
+            if (!state.isPlaying) return;
+            if (state.lastTimestamp === null) state.lastTimestamp = ts;
+            state.currentTime += (ts - state.lastTimestamp) * state.playbackSpeed;
+            state.lastTimestamp = ts;
+            if (state.currentTime >= state.totalDuration) {
+                if (state.looping) state.currentTime = 0;
+                else { state.currentTime = state.totalDuration; stopPlayback(); return; }
+            }
+            draw(getPositionsAtTime(state.currentTime));
+            updateProgressBar();
+            state.animationFrameId = requestAnimationFrame(animationLoop);
+        }
+        function goToStart() { stopPlayback(); state.currentTime = 0; state.selectedKeyframeIndex = 0; updateUI(); draw(); }
+        function goToEnd() { stopPlayback(); state.currentTime = state.totalDuration; state.selectedKeyframeIndex = state.keyframes.length - 1; updateUI(); draw(); }
+        function prevKeyframe() { stopPlayback(); if (state.selectedKeyframeIndex > 0) state.selectedKeyframeIndex--; jumpToKeyframeIndex(state.selectedKeyframeIndex); }
+        function nextKeyframe() { stopPlayback(); if (state.selectedKeyframeIndex < state.keyframes.length - 1) state.selectedKeyframeIndex++; jumpToKeyframeIndex(state.selectedKeyframeIndex); }
+        function jumpToKeyframeIndex(idx) {
+            stopPlayback(); state.selectedKeyframeIndex = idx;
+            let t = 0; for (let i = 1; i <= idx; i++) t += state.keyframes[i].duration || 1000;
+            state.currentTime = t; updateUI(); draw();
+        }
+        function seekProgress(e) {
+            stopPlayback();
+            const rect = e.currentTarget.getBoundingClientRect();
+            state.currentTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * state.totalDuration;
+            updateProgressBar(); draw(getPositionsAtTime(state.currentTime));
+        }
+        function updateSpeed() { state.playbackSpeed = parseFloat(document.getElementById('speed-select').value); }
+        function toggleLoop() {
+            state.looping = !state.looping;
+            const btn = document.getElementById('loop-btn');
+            btn.classList.toggle('active', state.looping);
+            btn.textContent = state.looping ? 'ðŸ”„ Loop On' : 'ðŸ”„ Loop Off';
+        }
+        function updateProgressBar() {
+            const prog = state.totalDuration > 0 ? (state.currentTime / state.totalDuration) * 100 : 0;
+            document.getElementById('progress-fill').style.width = prog + '%';
+            const cs = Math.floor(state.currentTime / 1000), ts = Math.floor(state.totalDuration / 1000);
+            document.getElementById('time-display').textContent = Math.floor(cs/60) + ':' + (cs%60).toString().padStart(2,'0') + ' / ' + Math.floor(ts/60) + ':' + (ts%60).toString().padStart(2,'0');
+        }
+        function updateKeyframeButtons() {
+            document.getElementById('keyframe-row').innerHTML = state.keyframes.map((kf, i) =>
+                '<button class="keyframe-btn ' + (state.selectedKeyframeIndex === i && !state.isPlaying ? 'active' : '') + '" onclick="jumpToKeyframeIndex(' + i + ')">' + (kf.label || 'Step ' + i) + '</button>'
+            ).join('');
+        }
+        function updateUI() { updateProgressBar(); updateKeyframeButtons(); }
+        updateUI(); draw();
+    </script>
+</body>
+</html>

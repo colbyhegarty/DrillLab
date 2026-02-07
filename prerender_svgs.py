@@ -1,78 +1,108 @@
 """
-Soccer Drill API - Animation Server
-===================================
-Serves animation HTML for drills. Data comes from Supabase.
+SVG Pre-Rendering Script
+=========================
+This script pre-renders all drill SVGs and uploads them to Supabase Storage.
+
+Usage:
+1. Make sure your drills are already in Supabase (run migrate_to_supabase.py first)
+2. Run: python prerender_svgs.py
+
+The script will:
+- Fetch all drills from Supabase
+- Render SVG for each drill using your renderer
+- Upload SVG to Supabase Storage
+- Update the drill record with the SVG URL
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-import json
 import os
-from supabase import create_client
+import sys
+import tempfile
+from pathlib import Path
+from typing import Dict, Optional
+from dotenv import load_dotenv
 
-app = FastAPI(title="Soccer Drill Animation API", version="3.0.0")
+# Load environment variables
+load_dotenv()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Add your drill_system to path (adjust path as needed)
+sys.path.insert(0, str(Path(__file__).parent / "drill_system"))
 
-# Supabase client
+# Supabase credentials
 SUPABASE_URL = "https://dgvaiejyixwxallybbcl.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRndmFpZWp5aXh3eGFsbHliYmNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDQzMjE2NywiZXhwIjoyMDg2MDA4MTY3fQ.Up0unYsv9iUmyoG22MHGLZRI9y8KyRYcPXCU3h0PDC0"
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
-@app.get("/health")
-async def health():
-    return {"status": "healthy", "version": "3.0.0"}
+# Storage bucket name
+SVG_BUCKET = "drill-svgs"
+ANIMATION_BUCKET = "drill-animations"
 
-@app.get("/api/animation/{drill_id}", response_class=HTMLResponse)
-async def get_animation(drill_id: str):
-    """Serve animation HTML for a drill"""
+# ============================================================
+# RENDERING FUNCTIONS
+# ============================================================
+
+def reconstruct_drill_json(drill: Dict) -> Dict:
+    """Reconstruct full drill JSON from database record"""
+    diagram = drill.get('diagram_json', {})
+    animation = drill.get('animation_json')
     
-    if not supabase:
-        raise HTTPException(500, "Supabase not configured")
-    
-    # Fetch drill from Supabase
-    result = supabase.table('drills').select('*').eq('id', drill_id).single().execute()
-    
-    if not result.data:
-        raise HTTPException(404, f"Drill '{drill_id}' not found")
-    
-    drill = result.data
-    
-    # Check if drill has animation
-    if not drill.get('animation_json'):
-        raise HTTPException(404, f"Drill '{drill_id}' has no animation")
-    
-    # Reconstruct full drill JSON for the animation player
-    drill_json = {
+    full_drill = {
         "name": drill['name'],
-        "field": drill['diagram_json'].get('field', {}),
-        "players": drill['diagram_json'].get('players', []),
-        "cones": drill['diagram_json'].get('cones', []),
-        "cone_lines": drill['diagram_json'].get('cone_lines', []),
-        "balls": drill['diagram_json'].get('balls', []),
-        "goals": drill['diagram_json'].get('goals', []),
-        "mini_goals": drill['diagram_json'].get('mini_goals', []),
-        "animation": drill['animation_json']
+        "description": drill.get('description', ''),
+        "field": diagram.get('field', {}),
+        "players": diagram.get('players', []),
+        "cones": diagram.get('cones', []),
+        "cone_gates": diagram.get('cone_gates', []),
+        "cone_lines": diagram.get('cone_lines', []),
+        "balls": diagram.get('balls', []),
+        "goals": diagram.get('goals', []),
+        "mini_goals": diagram.get('mini_goals', []),
+        "mannequins": diagram.get('mannequins', []),
+        "actions": diagram.get('actions', []),
+        "coaching_points": diagram.get('coaching_points', []),
+        "variations": diagram.get('variations', [])
     }
     
-    # Generate and return HTML
-    html = generate_animation_html(drill_json, drill['name'])
-    return HTMLResponse(content=html)
+    if animation:
+        full_drill['animation'] = animation
+    
+    return full_drill
 
 
-def generate_animation_html(drill_json: dict, drill_name: str) -> str:
-    """Generate complete animation HTML player"""
+def render_svg(drill_json: Dict) -> Optional[str]:
+    """Render drill to SVG and return the SVG content"""
+    try:
+        from schema import Drill
+        from renderer import render
+        
+        drill = Drill(**drill_json)
+        
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as f:
+            temp_path = f.name
+        
+        render(drill, temp_path)
+        
+        with open(temp_path, 'r') as f:
+            svg_content = f.read()
+        
+        os.unlink(temp_path)
+        return svg_content
     
-    drill_data = json.dumps(drill_json)
+    except Exception as e:
+        print(f"    Error rendering SVG: {e}")
+        return None
+
+
+def generate_animation_html(drill_json: Dict, drill_name: str) -> Optional[str]:
+    """Generate animation HTML player for a drill"""
+    import json
     
-    return f'''<!DOCTYPE html>
+    animation = drill_json.get('animation')
+    if not animation or not animation.get('keyframes'):
+        return None
+    
+    drill_data_json = json.dumps(drill_json)
+    
+    # This is the same HTML template from main.py
+    html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -134,7 +164,7 @@ def generate_animation_html(drill_json: dict, drill_name: str) -> str:
         </div>
     </div>
     <script>
-        const drill = {drill_data};
+        const drill = {drill_data_json};
         const state = {{
             keyframes: drill.animation?.keyframes || [],
             isPlaying: false, playbackSpeed: 1, currentTime: 0, totalDuration: 0,
@@ -363,9 +393,144 @@ def generate_animation_html(drill_json: dict, drill_name: str) -> str:
     </script>
 </body>
 </html>'''
+    
+    return html
 
+
+# ============================================================
+# UPLOAD FUNCTIONS
+# ============================================================
+
+def upload_to_storage(supabase, bucket: str, filename: str, content: str, content_type: str) -> Optional[str]:
+    """Upload content to Supabase Storage and return the public URL"""
+    try:
+        # Upload file
+        result = supabase.storage.from_(bucket).upload(
+            filename,
+            content.encode('utf-8'),
+            {"content-type": content_type}
+        )
+        
+        # Get public URL
+        public_url = supabase.storage.from_(bucket).get_public_url(filename)
+        return public_url
+    
+    except Exception as e:
+        # If file exists, try to update it
+        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+            try:
+                supabase.storage.from_(bucket).update(
+                    filename,
+                    content.encode('utf-8'),
+                    {"content-type": content_type}
+                )
+                return supabase.storage.from_(bucket).get_public_url(filename)
+            except:
+                pass
+        print(f"    Error uploading to storage: {e}")
+        return None
+
+
+def prerender_all_svgs():
+    """Main function to pre-render all SVGs"""
+    from supabase import create_client
+    
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("ERROR: Missing Supabase credentials!")
+        return
+    
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    
+    # Fetch all drills
+    print("Fetching drills from Supabase...")
+    result = supabase.table('drills').select('*').execute()
+    drills = result.data
+    print(f"Found {len(drills)} drills")
+    
+    # Process each drill
+    success_count = 0
+    error_count = 0
+    
+    for i, drill in enumerate(drills):
+        drill_id = drill['id']
+        drill_name = drill['name']
+        print(f"\n[{i+1}/{len(drills)}] Processing: {drill_name}")
+        
+        # Reconstruct full drill JSON
+        drill_json = reconstruct_drill_json(drill)
+        
+        # Render SVG
+        print("  Rendering SVG...")
+        svg_content = render_svg(drill_json)
+        
+        if svg_content:
+            # Upload SVG
+            print("  Uploading SVG...")
+            svg_url = upload_to_storage(
+                supabase, 
+                SVG_BUCKET, 
+                f"{drill_id}.svg", 
+                svg_content, 
+                "image/svg+xml"
+            )
+            
+            if svg_url:
+                # Update drill record with SVG URL
+                supabase.table('drills').update({
+                    'svg_url': svg_url
+                }).eq('id', drill_id).execute()
+                print(f"  ✓ SVG uploaded: {svg_url[:50]}...")
+            else:
+                error_count += 1
+                continue
+        else:
+            error_count += 1
+            continue
+        
+        # Generate and upload animation HTML if applicable
+        if drill.get('animation_json'):
+            print("  Generating animation HTML...")
+            animation_html = generate_animation_html(drill_json, drill_name)
+            
+            if animation_html:
+                print("  Uploading animation HTML...")
+                animation_url = upload_to_storage(
+                    supabase,
+                    ANIMATION_BUCKET,
+                    f"{drill_id}.html",
+                    animation_html,
+                    "text/html"
+                )
+                
+                if animation_url:
+                    supabase.table('drills').update({
+                        'animation_html_url': animation_url
+                    }).eq('id', drill_id).execute()
+                    print(f"  ✓ Animation uploaded: {animation_url[:50]}...")
+        
+        success_count += 1
+    
+    print(f"\n{'='*50}")
+    print(f"Pre-rendering complete!")
+    print(f"  Success: {success_count}")
+    print(f"  Errors: {error_count}")
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Pre-render drill SVGs and upload to Supabase')
+    parser.add_argument('--drill-id', help='Only process a specific drill by ID')
+    
+    args = parser.parse_args()
+    
+    if args.drill_id:
+        # Process single drill (for testing)
+        print(f"Processing single drill: {args.drill_id}")
+        # TODO: Implement single drill processing
+    else:
+        prerender_all_svgs()
