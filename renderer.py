@@ -59,13 +59,56 @@ GOAL_COLOR = "white"
 
 
 # ============================================================
+# PORTRAIT ROTATION UTILITIES  
+# ============================================================
+
+def is_portrait_drill(drill: Drill) -> bool:
+    """Detect if drill is portrait orientation (goals at top/bottom)"""
+    # Check explicit goals
+    if drill.goals:
+        has_vertical = any(g.position.y <= 10 or g.position.y >= 90 for g in drill.goals)
+        has_horizontal = any(g.position.x <= 10 or g.position.x >= 90 for g in drill.goals)
+        if has_vertical and not has_horizontal:
+            return True
+        if has_horizontal and not has_vertical:
+            return False
+    
+    # Check mini goals
+    if drill.mini_goals:
+        has_vertical = any(g.position.y <= 10 or g.position.y >= 90 for g in drill.mini_goals)
+        has_horizontal = any(g.position.x <= 10 or g.position.x >= 90 for g in drill.mini_goals)
+        if has_vertical and not has_horizontal:
+            return True
+        if has_horizontal and not has_vertical:
+            return False
+    
+    # Built-in goals are always at y=0/100 (portrait)
+    if drill.field.goals and drill.field.goals > 0:
+        return True
+    
+    return False
+
+def transform_pos(x: float, y: float, is_portrait: bool) -> Tuple[float, float]:
+    """Transform (x,y) → (y, 100-x) for 90° clockwise rotation"""
+    if not is_portrait:
+        return (x, y)
+    return (y, 100 - x)
+
+def transform_rot(rotation: float, is_portrait: bool) -> float:
+    """Add 90° to rotation for portrait drills"""
+    if not is_portrait:
+        return rotation
+    return (rotation + 90) % 360
+
+# ============================================================
 # FIELD RENDERER
 # ============================================================
 
 class FieldRenderer:
     """Renders the soccer field with improved cropping logic"""
     
-    def __init__(self, ax, drill: Drill, padding: float = 8.0):
+    def __init__(self, ax, drill: Drill, padding: float = 8.0, is_portrait: bool = False):
+        self.is_portrait = is_portrait
         self.ax = ax
         self.drill = drill
         self.field = drill.field
@@ -390,22 +433,32 @@ class FieldRenderer:
 class EntityRenderer:
     """Renders players, cones, balls, cone lines, mini goals, and full-size goals"""
     
-    def __init__(self, ax):
+    def __init__(self, ax, is_portrait: bool = False):
         self.ax = ax
+        self.is_portrait = is_portrait
+    
+    def _transform(self, x: float, y: float) -> Tuple[float, float]:
+        """Transform position if portrait mode"""
+        return transform_pos(x, y, self.is_portrait)
+    
+    def _transform_rotation(self, rotation: float) -> float:
+        """Transform rotation if portrait mode"""
+        return transform_rot(rotation, self.is_portrait)
     
     def draw_player(self, player: Player):
         """Draw a player marker"""
+        x, y = self._transform(player.position.x, player.position.y)
         color = ROLE_COLORS.get(player.role, ROLE_COLORS[PlayerRole.NEUTRAL])
         
         self.ax.scatter(
-            player.position.x, player.position.y,
+            x, y,
             s=150, c=color, edgecolors="white",
             linewidths=1.5, zorder=10
         )
         
         self.ax.annotate(
             player.id,
-            (player.position.x, player.position.y),
+            (x, y),
             textcoords="offset points",
             xytext=(0, -16),
             ha='center',
@@ -417,8 +470,9 @@ class EntityRenderer:
     
     def draw_cone(self, x: float, y: float):
         """Draw a cone marker"""
+        tx, ty = self._transform(x, y)
         self.ax.scatter(
-            x, y, s=80, marker="^",
+            tx, ty, s=80, marker="^",
             c=CONE_COLOR, edgecolors="black",
             linewidths=0.8, zorder=4
         )
@@ -428,32 +482,36 @@ class EntityRenderer:
         from_cone = cones[cone_line.from_cone]
         to_cone = cones[cone_line.to_cone]
         
+        fx, fy = self._transform(from_cone.position.x, from_cone.position.y)
+        tx, ty = self._transform(to_cone.position.x, to_cone.position.y)
+        
         self.ax.plot(
-            [from_cone.position.x, to_cone.position.x],
-            [from_cone.position.y, to_cone.position.y],
+            [fx, tx],
+            [fy, ty],
             color=CONE_LINE_COLOR,
             linewidth=2.0,
             linestyle='-',
             alpha=0.8,
-            zorder=3  # Below cones but above grass
+            zorder=3
         )
     
     def draw_ball(self, x: float, y: float):
         """Draw a soccer ball"""
+        tx, ty = self._transform(x, y)
         self.ax.scatter(
-            x, y, s=120, c="white",
+            tx, ty, s=120, c="white",
             edgecolors="black", linewidths=1.5,
             zorder=12
         )
         self.ax.scatter(
-            x, y, s=35, c="black",
+            tx, ty, s=35, c="black",
             marker='p',
             zorder=13
         )
     
     def draw_mannequin(self, mannequin: Mannequin):
         """Draw a training mannequin"""
-        x, y = mannequin.position.x, mannequin.position.y
+        x, y = self._transform(mannequin.position.x, mannequin.position.y)
         
         self.ax.scatter(
             x, y, s=100, c=MANNEQUIN_COLOR,
@@ -489,37 +547,25 @@ class EntityRenderer:
     def draw_mini_goal(self, mini_goal):
         """
         Draw a mini/pugg goal at the specified position with rotation.
-        Looks like a smaller version of the full-size goal (rectangular with posts and net).
-        Color is white to match full-size goals.
-        
-        Rotation (flipped 180° from input - so 0° input means opening faces SOUTH):
-        - 0° input: Opening faces SOUTH (down) - net at top
-        - 90° input: Opening faces WEST (left) - net at right  
-        - 180° input: Opening faces NORTH (up) - net at bottom
-        - 270° input: Opening faces EAST (right) - net at left
         """
-        x, y = mini_goal.position.x, mini_goal.position.y
-        # Flip rotation by 180 degrees
-        rotation = (mini_goal.rotation + 180) % 360
+        x, y = self._transform(mini_goal.position.x, mini_goal.position.y)
+        # Flip rotation by 180 degrees, then apply portrait transform
+        rotation = (self._transform_rotation(mini_goal.rotation) + 180) % 360
         
         width = 4  # Mini goal width
         depth = 2  # Mini goal depth
         post_width = 2.0
         
-        # Use white for mini goals (same as full-size goals)
         frame_color = GOAL_COLOR  # white
         net_color = 'gray'
         
         if rotation == 0:  # Faces NORTH (opening at top)
-            # Posts (vertical)
             self.ax.plot([x - width/2, x - width/2], [y, y + depth], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y + depth], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back bar
             self.ax.plot([x - width/2, x + width/2], [y, y], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Net strings (vertical)
             num_strings = 5
             for i in range(num_strings):
                 net_x = x - width/2 + i * (width / (num_strings - 1))
@@ -527,15 +573,12 @@ class EntityRenderer:
                             color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
         elif rotation == 90:  # Faces EAST (opening at right)
-            # Posts (horizontal)
             self.ax.plot([x, x + depth], [y - width/2, y - width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x + depth], [y + width/2, y + width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back bar
             self.ax.plot([x, x], [y - width/2, y + width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Net strings (horizontal)
             num_strings = 5
             for i in range(num_strings):
                 net_y = y - width/2 + i * (width / (num_strings - 1))
@@ -543,15 +586,12 @@ class EntityRenderer:
                             color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
         elif rotation == 180:  # Faces SOUTH (opening at bottom)
-            # Posts (vertical)
             self.ax.plot([x - width/2, x - width/2], [y, y - depth], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y - depth], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back bar
             self.ax.plot([x - width/2, x + width/2], [y, y], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Net strings (vertical)
             num_strings = 5
             for i in range(num_strings):
                 net_x = x - width/2 + i * (width / (num_strings - 1))
@@ -559,15 +599,12 @@ class EntityRenderer:
                             color=net_color, lw=0.5, alpha=0.4, zorder=5)
                             
         else:  # 270° - Faces WEST (opening at left)
-            # Posts (horizontal)
             self.ax.plot([x, x - depth], [y - width/2, y - width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x - depth], [y + width/2, y + width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back bar
             self.ax.plot([x, x], [y - width/2, y + width/2], 
                         color=frame_color, lw=post_width, solid_capstyle='round', zorder=6)
-            # Net strings (horizontal)
             num_strings = 5
             for i in range(num_strings):
                 net_y = y - width/2 + i * (width / (num_strings - 1))
@@ -577,88 +614,65 @@ class EntityRenderer:
     def draw_full_goal(self, goal):
         """
         Draw a full-size goal at the specified position with rotation.
-        
-        Rotation:
-        - 0°: Opening faces NORTH (up)
-        - 90°: Opening faces EAST (right)
-        - 180°: Opening faces SOUTH (down)
-        - 270°: Opening faces WEST (left)
         """
-        x, y = goal.position.x, goal.position.y
-        rotation = goal.rotation
+        x, y = self._transform(goal.position.x, goal.position.y)
+        rotation = self._transform_rotation(goal.rotation)
         
         width = 8  # Goal width
         depth = 3  # Goal depth
         post_width = 3.0
         
         if rotation == 0:  # Faces NORTH
-            # Posts
             self.ax.plot([x - width/2, x - width/2], [y, y + depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y + depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Crossbar (front)
             self.ax.plot([x - width/2, x + width/2], [y + depth, y + depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back line
             self.ax.plot([x - width/2, x + width/2], [y, y], 
                         color='gray', lw=1.5, alpha=0.6, zorder=5)
-            # Net strings
             for i in range(int(width) + 1):
                 net_x = x - width/2 + i * (width / int(width))
                 self.ax.plot([net_x, net_x], [y, y + depth], color='gray', lw=0.5, alpha=0.4, zorder=5)
         
         elif rotation == 90:  # Faces EAST
-            # Posts
             self.ax.plot([x, x + depth], [y - width/2, y - width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x + depth], [y + width/2, y + width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Crossbar (front)
             self.ax.plot([x + depth, x + depth], [y - width/2, y + width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back line
             self.ax.plot([x, x], [y - width/2, y + width/2], 
                         color='gray', lw=1.5, alpha=0.6, zorder=5)
-            # Net strings
             for i in range(int(width) + 1):
                 net_y = y - width/2 + i * (width / int(width))
                 self.ax.plot([x, x + depth], [net_y, net_y], color='gray', lw=0.5, alpha=0.4, zorder=5)
         
         elif rotation == 180:  # Faces SOUTH
-            # Posts
             self.ax.plot([x - width/2, x - width/2], [y, y - depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x + width/2, x + width/2], [y, y - depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Crossbar (front)
             self.ax.plot([x - width/2, x + width/2], [y - depth, y - depth], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back line
             self.ax.plot([x - width/2, x + width/2], [y, y], 
                         color='gray', lw=1.5, alpha=0.6, zorder=5)
-            # Net strings
             for i in range(int(width) + 1):
                 net_x = x - width/2 + i * (width / int(width))
                 self.ax.plot([net_x, net_x], [y, y - depth], color='gray', lw=0.5, alpha=0.4, zorder=5)
         
         else:  # 270° - Faces WEST
-            # Posts
             self.ax.plot([x, x - depth], [y - width/2, y - width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
             self.ax.plot([x, x - depth], [y + width/2, y + width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Crossbar (front)
             self.ax.plot([x - depth, x - depth], [y - width/2, y + width/2], 
                         color=GOAL_COLOR, lw=post_width, solid_capstyle='round', zorder=6)
-            # Back line
             self.ax.plot([x, x], [y - width/2, y + width/2], 
                         color='gray', lw=1.5, alpha=0.6, zorder=5)
-            # Net strings
             for i in range(int(width) + 1):
                 net_y = y - width/2 + i * (width / int(width))
                 self.ax.plot([x, x - depth], [net_y, net_y], color='gray', lw=0.5, alpha=0.4, zorder=5)
-
 
 # ============================================================
 # ACTION RENDERER
@@ -673,19 +687,28 @@ class ActionRenderer:
     PLAYER_OFFSET = 2.5
     ACTION_GAP = 0.8
     
-    def __init__(self, ax, goal_y: float):
+    def __init__(self, ax, goal_y: float, is_portrait: bool = False):
         self.ax = ax
         self.goal_y = goal_y
+        self.is_portrait = is_portrait
+    
+    def _transform(self, x: float, y: float) -> Tuple[float, float]:
+        """Transform position if portrait mode"""
+        return transform_pos(x, y, self.is_portrait)
     
     def _get_offset_points(self, x1: float, y1: float, x2: float, y2: float, 
                            start_is_player: bool = True, end_is_player: bool = True) -> tuple:
-        """Calculate offset start and end points"""
-        dx = x2 - x1
-        dy = y2 - y1
+        """Calculate offset start and end points (with transform)"""
+        # Transform positions first
+        tx1, ty1 = self._transform(x1, y1)
+        tx2, ty2 = self._transform(x2, y2)
+        
+        dx = tx2 - tx1
+        dy = ty2 - ty1
         dist = np.sqrt(dx**2 + dy**2)
         
         if dist == 0:
-            return x1, y1, x2, y2
+            return tx1, ty1, tx2, ty2
         
         ux = dx / dist
         uy = dy / dist
@@ -693,10 +716,10 @@ class ActionRenderer:
         start_offset = self.PLAYER_OFFSET if start_is_player else self.ACTION_GAP
         end_offset = self.PLAYER_OFFSET if end_is_player else self.ACTION_GAP
         
-        start_x = x1 + ux * start_offset
-        start_y = y1 + uy * start_offset
-        end_x = x2 - ux * end_offset
-        end_y = y2 - uy * end_offset
+        start_x = tx1 + ux * start_offset
+        start_y = ty1 + uy * start_offset
+        end_x = tx2 - ux * end_offset
+        end_y = ty2 - uy * end_offset
         
         return start_x, start_y, end_x, end_y
     
@@ -859,14 +882,15 @@ class ActionRenderer:
 class PositionTracker:
     """Tracks player positions and ball possession through actions"""
     
-    def __init__(self, drill: Drill):
+    def __init__(self, drill: Drill, is_portrait: bool = False):
         self.drill = drill
+        self.is_portrait = is_portrait
         self.player_positions: Dict[str, Tuple[float, float]] = {}
         self.player_has_moved: Dict[str, bool] = {}
         self.ball_holder: Optional[str] = None
         self.ball_position: Optional[Tuple[float, float]] = None
         
-        # Initialize player positions
+        # Initialize player positions (NOT transformed - we store original coords)
         for player in drill.players:
             self.player_positions[player.id] = (player.position.x, player.position.y)
             self.player_has_moved[player.id] = False
@@ -972,7 +996,14 @@ def render(
     dpi: int = 100
 ) -> str:
     """Render a drill to an SVG file"""
+
+    # Detect portrait orientation
+    is_portrait = is_portrait_drill(drill)
+    
     fig, ax = plt.subplots(figsize=figsize)
+    
+    # Pass is_portrait to FieldRenderer
+    field_renderer = FieldRenderer(ax, drill, is_portrait=is_portrait)
     
     # Draw field
     field_renderer = FieldRenderer(ax, drill)
