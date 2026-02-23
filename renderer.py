@@ -973,6 +973,13 @@ def render(
 ) -> str:
     """Render a drill to an SVG file"""
     fig, ax = plt.subplots(figsize=figsize)
+
+    # Make background transparent to remove white border
+    fig.patch.set_alpha(0)
+    ax.patch.set_alpha(0)
+    
+    # Remove all margins/padding
+    fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     
     # Draw field
     field_renderer = FieldRenderer(ax, drill)
@@ -1081,7 +1088,7 @@ def render(
             action_renderer.draw_shot(start_x, start_y, target_x, target_y, start_is_player)
     
     # Save
-    plt.savefig(output_path, format="svg", bbox_inches="tight", dpi=dpi)
+    plt.savefig(output_path, format="svg", bbox_inches="tight", dpi=dpi, transparent=True, pad_inches=0)
     plt.close()
     
     return output_path
