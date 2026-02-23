@@ -238,7 +238,7 @@ class FieldRenderer:
         self.ax.set_ylim(self.y_min, self.y_max)
         
         self._draw_grass()
-        self._draw_outline()
+        # self._draw_outline()
         
         # Check if explicit goals are provided in the drill
         has_explicit_goals = len(self.drill.goals) > 0
