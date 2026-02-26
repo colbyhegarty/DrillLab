@@ -293,26 +293,35 @@ class FieldRenderer:
         self.ax.axis("off")
     
     def _draw_grass(self):
-        """Draw striped grass - fills entire visible area based on actual bounds"""
+        """Draw striped grass - fills entire visible area with consistent stripe pattern"""
         stripe_width = 10
         
-        # Use the actual view bounds (with some extra margin to ensure full coverage)
-        start_x = self.x_min - stripe_width
-        end_x = self.x_max + stripe_width
-        start_y = self.y_min - stripe_width
-        end_y = self.y_max + stripe_width
+        # Calculate the actual visible range with extra margin
+        # Use much larger range to ensure complete coverage regardless of zoom level
+        margin = 50  # Large margin to ensure coverage
         
-        # Calculate starting stripe index to maintain consistent stripe pattern
-        start_stripe = int(start_x // stripe_width)
-        end_stripe = int(end_x // stripe_width) + 1
+        start_x = self.x_min - margin
+        end_x = self.x_max + margin
+        start_y = self.y_min - margin
+        end_y = self.y_max + margin
         
-        # Draw stripes across entire visible area
-        for i in range(start_stripe, end_stripe + 1):
-            stripe_x = i * stripe_width
-            color = GRASS_LIGHT if i % 2 == 0 else GRASS_DARK
+        # Align stripes to global coordinate system (so stripe at x=0-10 is always same color)
+        # This ensures consistency across all drills regardless of crop/zoom
+        first_stripe = int(np.floor(start_x / stripe_width)) * stripe_width
+        last_stripe = int(np.ceil(end_x / stripe_width)) * stripe_width
+        
+        # Draw stripes
+        for stripe_x in range(first_stripe, last_stripe + stripe_width, stripe_width):
+            # Determine color based on stripe index (not position) for consistency
+            stripe_index = stripe_x // stripe_width
+            color = GRASS_LIGHT if stripe_index % 2 == 0 else GRASS_DARK
+            
             self.ax.add_patch(patches.Rectangle(
-                (stripe_x, start_y), stripe_width, end_y - start_y,
-                color=color, zorder=0
+                (stripe_x, start_y), 
+                stripe_width, 
+                end_y - start_y,
+                color=color, 
+                zorder=0
             ))
     
     def _draw_outline(self):
@@ -1097,8 +1106,8 @@ def render(
             
             action_renderer.draw_shot(start_x, start_y, target_x, target_y, start_is_player)
     
-    # Save
-    plt.savefig(output_path, format="svg", bbox_inches="tight", dpi=dpi, transparent=True, pad_inches=0)
+    # Save with tight bounding box and no padding
+    plt.savefig(output_path, format="svg", bbox_inches="tight", pad_inches=0, transparent=False)
     plt.close()
     
     return output_path
