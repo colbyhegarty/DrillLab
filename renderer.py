@@ -293,21 +293,25 @@ class FieldRenderer:
         self.ax.axis("off")
     
     def _draw_grass(self):
-        """Draw striped grass - fills entire visible area"""
+        """Draw striped grass - fills entire visible area based on actual bounds"""
         stripe_width = 10
         
-        # Extend beyond bounds to fill entire canvas
-        # Use figure limits, not content bounds
-        start_x = -10  # Start before 0 to ensure coverage
-        end_x = 110    # End after 100 to ensure coverage
-        start_y = -10
-        end_y = 110
+        # Use the actual view bounds (with some extra margin to ensure full coverage)
+        start_x = self.x_min - stripe_width
+        end_x = self.x_max + stripe_width
+        start_y = self.y_min - stripe_width
+        end_y = self.y_max + stripe_width
         
-        # Draw stripes across entire area
-        for i in range(int(start_x), int(end_x), stripe_width):
-            color = GRASS_LIGHT if (i // stripe_width) % 2 == 0 else GRASS_DARK
+        # Calculate starting stripe index to maintain consistent stripe pattern
+        start_stripe = int(start_x // stripe_width)
+        end_stripe = int(end_x // stripe_width) + 1
+        
+        # Draw stripes across entire visible area
+        for i in range(start_stripe, end_stripe + 1):
+            stripe_x = i * stripe_width
+            color = GRASS_LIGHT if i % 2 == 0 else GRASS_DARK
             self.ax.add_patch(patches.Rectangle(
-                (i, start_y), stripe_width, end_y - start_y,
+                (stripe_x, start_y), stripe_width, end_y - start_y,
                 color=color, zorder=0
             ))
     
