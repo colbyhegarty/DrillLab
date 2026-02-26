@@ -234,8 +234,22 @@ class FieldRenderer:
     
     def draw(self):
         """Draw the complete field"""
-        self.ax.set_xlim(self.x_min, self.x_max)
-        self.ax.set_ylim(self.y_min, self.y_max)
+        # Add extra padding around content for grass to extend
+        grass_padding = 15  # Extra grass visible around content
+        
+        view_x_min = self.x_min - grass_padding
+        view_x_max = self.x_max + grass_padding
+        view_y_min = self.y_min - grass_padding
+        view_y_max = self.y_max + grass_padding
+        
+        # Clamp to reasonable bounds (don't go too far beyond 0-100)
+        view_x_min = max(-20, view_x_min)
+        view_x_max = min(120, view_x_max)
+        view_y_min = max(-20, view_y_min)
+        view_y_max = min(120, view_y_max)
+        
+        self.ax.set_xlim(view_x_min, view_x_max)
+        self.ax.set_ylim(view_y_min, view_y_max)
         
         self._draw_grass()
         # self._draw_outline()
@@ -293,26 +307,25 @@ class FieldRenderer:
         self.ax.axis("off")
     
     def _draw_grass(self):
-        """Draw striped grass - fills entire visible area with consistent stripe pattern"""
+        """Draw striped grass - fills entire visible area"""
         stripe_width = 10
         
-        # Calculate the actual visible range with extra margin
-        # Use much larger range to ensure complete coverage regardless of zoom level
-        margin = 50  # Large margin to ensure coverage
+        # Get current axis limits
+        x_min, x_max = self.ax.get_xlim()
+        y_min, y_max = self.ax.get_ylim()
         
-        start_x = self.x_min - margin
-        end_x = self.x_max + margin
-        start_y = self.y_min - margin
-        end_y = self.y_max + margin
+        # Add margin to ensure complete coverage
+        margin = stripe_width * 2
+        start_x = x_min - margin
+        end_x = x_max + margin
+        start_y = y_min - margin
+        end_y = y_max + margin
         
-        # Align stripes to global coordinate system (so stripe at x=0-10 is always same color)
-        # This ensures consistency across all drills regardless of crop/zoom
+        # Align to stripe grid
         first_stripe = int(np.floor(start_x / stripe_width)) * stripe_width
         last_stripe = int(np.ceil(end_x / stripe_width)) * stripe_width
         
-        # Draw stripes
         for stripe_x in range(first_stripe, last_stripe + stripe_width, stripe_width):
-            # Determine color based on stripe index (not position) for consistency
             stripe_index = stripe_x // stripe_width
             color = GRASS_LIGHT if stripe_index % 2 == 0 else GRASS_DARK
             
@@ -323,6 +336,7 @@ class FieldRenderer:
                 color=color, 
                 zorder=0
             ))
+
     
     def _draw_outline(self):
         """Draw field outline"""
