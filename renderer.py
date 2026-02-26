@@ -1001,65 +1001,21 @@ def _get_first_action_direction(drill: Drill, ball_holder: str) -> Optional[Tupl
 def render(
     drill: Drill,
     output_path: str,
-    figsize: tuple = (12, 8),  # Fixed landscape aspect ratio (3:2)
+    figsize: tuple = (8, 12),
     dpi: int = 100
 ) -> str:
-    """Render a drill to an SVG file with consistent dimensions"""
+    """Render a drill to an SVG file"""
     fig, ax = plt.subplots(figsize=figsize)
-    
-    # Make background transparent
+
+    # Make background transparent to remove white border
     fig.patch.set_alpha(0)
     ax.patch.set_alpha(0)
     
-    # Remove all margins
+    # Remove all margins/padding
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     
-    # Create field renderer (calculates content bounds internally)
+    # Draw field
     field_renderer = FieldRenderer(ax, drill)
-    
-    # IMPORTANT: Override the view limits to maintain consistent aspect ratio
-    # while still centering on the content
-    content_center_x = (field_renderer.x_min + field_renderer.x_max) / 2
-    content_center_y = (field_renderer.y_min + field_renderer.y_max) / 2
-    content_width = field_renderer.x_max - field_renderer.x_min
-    content_height = field_renderer.y_max - field_renderer.y_min
-    
-    # Target aspect ratio (matches figsize)
-    target_aspect = figsize[0] / figsize[1]  # 12/8 = 1.5
-    
-    # Calculate view bounds that:
-    # 1. Center on the content
-    # 2. Show all content with padding
-    # 3. Maintain the target aspect ratio
-    
-    padding = 8
-    padded_width = content_width + padding * 2
-    padded_height = content_height + padding * 2
-    
-    current_aspect = padded_width / padded_height
-    
-    if current_aspect > target_aspect:
-        # Content is wider than target - expand height
-        view_width = padded_width
-        view_height = padded_width / target_aspect
-    else:
-        # Content is taller than target - expand width
-        view_height = padded_height
-        view_width = padded_height * target_aspect
-    
-    # Center the view on content
-    view_x_min = content_center_x - view_width / 2
-    view_x_max = content_center_x + view_width / 2
-    view_y_min = content_center_y - view_height / 2
-    view_y_max = content_center_y + view_height / 2
-    
-    # Store these for the field renderer to use
-    field_renderer.x_min = view_x_min
-    field_renderer.x_max = view_x_max
-    field_renderer.y_min = view_y_min
-    field_renderer.y_max = view_y_max
-    
-    # Now draw
     field_renderer.draw()
     
     # Draw entities
