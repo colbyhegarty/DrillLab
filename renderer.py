@@ -65,7 +65,7 @@ GOAL_COLOR = "white"
 class FieldRenderer:
     """Renders the soccer field with improved cropping logic"""
     
-    def __init__(self, ax, drill: Drill, padding: float = 8.0):
+    def __init__(self, ax, drill: Drill, padding: float = 3.0):
         self.ax = ax
         self.drill = drill
         self.field = drill.field
