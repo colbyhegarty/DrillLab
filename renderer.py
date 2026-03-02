@@ -1002,7 +1002,8 @@ def render(
     drill: Drill,
     output_path: str,
     figsize: tuple = (8, 12),
-    dpi: int = 100
+    dpi: int = 100,
+    padding: float = None
 ) -> str:
     """Render a drill to an SVG file"""
     fig, ax = plt.subplots(figsize=figsize)
@@ -1015,7 +1016,7 @@ def render(
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     
     # Draw field
-    field_renderer = FieldRenderer(ax, drill)
+    field_renderer = FieldRenderer(ax, drill, padding=padding)  # CHANGE THIS LINE
     field_renderer.draw()
     
     # Draw entities
