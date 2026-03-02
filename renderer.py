@@ -65,11 +65,11 @@ GOAL_COLOR = "white"
 class FieldRenderer:
     """Renders the soccer field with improved cropping logic"""
     
-    def __init__(self, ax, drill: Drill, padding: float = 3.0):
+    def __init__(self, ax, drill: Drill, padding: float = None):
         self.ax = ax
         self.drill = drill
         self.field = drill.field
-        self.padding = padding
+        self.padding = padding if padding is not None else 4.0
         self.attacking_goal_y = 100 if self.field.attacking_direction == AttackingDirection.NORTH else 0
         
         # Calculate content bounds
