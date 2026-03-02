@@ -234,22 +234,15 @@ class FieldRenderer:
     
     def draw(self):
         """Draw the complete field"""
-        # Add extra padding around content for grass to extend
-        grass_padding = 15  # Extra grass visible around content
+        # Use the calculated bounds directly (padding already applied in _calculate_bounds)
+        self.ax.set_xlim(self.x_min, self.x_max)
+        self.ax.set_ylim(self.y_min, self.y_max)
         
-        view_x_min = self.x_min - grass_padding
-        view_x_max = self.x_max + grass_padding
-        view_y_min = self.y_min - grass_padding
-        view_y_max = self.y_max + grass_padding
+        self._draw_grass()
+        # self._draw_outline()
         
-        # Clamp to reasonable bounds (don't go too far beyond 0-100)
-        view_x_min = max(-20, view_x_min)
-        view_x_max = min(120, view_x_max)
-        view_y_min = max(-20, view_y_min)
-        view_y_max = min(120, view_y_max)
-        
-        self.ax.set_xlim(view_x_min, view_x_max)
-        self.ax.set_ylim(view_y_min, view_y_max)
+        # Check if explicit goals are provided in the drill
+        has_explicit_goals = len(self.drill.goals) > 0
         
         self._draw_grass()
         # self._draw_outline()
