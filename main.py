@@ -11,6 +11,15 @@ import json
 import os
 from supabase import create_client
 
+from fastapi.responses import Response
+from pydantic import BaseModel
+from typing import Optional
+import tempfile
+import os
+
+from renderer import render
+from schema import Drill
+
 app = FastAPI(title="Soccer Drill Animation API", version="3.0.0")
 
 app.add_middleware(
@@ -363,6 +372,38 @@ def generate_animation_html(drill_json: dict, drill_name: str) -> str:
     </script>
 </body>
 </html>'''
+
+class PreviewRequest(BaseModel):
+    diagram_json: dict
+    name: Optional[str] = "Preview Drill"
+    padding: Optional[float] = 4.0
+
+# Add this endpoint:
+@app.post("/api/preview-diagram")
+async def preview_diagram(request: PreviewRequest):
+    """Generate a preview SVG with custom padding"""
+    try:
+        full_drill_data = {
+            'name': request.name,
+            **request.diagram_json
+        }
+        
+        drill = Drill(**full_drill_data)
+        
+        with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        render(drill, tmp_path, padding=request.padding)
+        
+        with open(tmp_path, 'r') as f:
+            svg_content = f.read()
+        
+        os.unlink(tmp_path)
+        
+        return Response(content=svg_content, media_type="image/svg+xml")
+        
+    except Exception as e:
+        raise HTTPException(500, f"Failed to generate preview: {str(e)}")
 
 
 if __name__ == "__main__":
