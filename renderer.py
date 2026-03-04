@@ -65,11 +65,12 @@ GOAL_COLOR = "white"
 class FieldRenderer:
     """Renders the soccer field with improved cropping logic"""
     
-    def __init__(self, ax, drill: Drill, padding: float = None):
+    def __init__(self, ax, drill: Drill, padding: float = None, target_aspect_ratio: float = None):
         self.ax = ax
         self.drill = drill
         self.field = drill.field
         self.padding = padding if padding is not None else 4.0
+        self.target_aspect_ratio = target_aspect_ratio  # e.g., 4/3 = 1.333
         self.attacking_goal_y = 100 if self.field.attacking_direction == AttackingDirection.NORTH else 0
         
         # Calculate content bounds
@@ -231,6 +232,26 @@ class FieldRenderer:
                     self.x_max = min(100, current_width)
                 elif self.x_max == 100:
                     self.x_min = max(0, 100 - current_width)
+
+        # Enforce target aspect ratio if specified
+        if self.target_aspect_ratio:
+            current_width = self.x_max - self.x_min
+            current_height = self.y_max - self.y_min
+            current_aspect = current_width / current_height if current_height > 0 else 1
+            
+            center_x = (self.x_min + self.x_max) / 2
+            center_y = (self.y_min + self.y_max) / 2
+            
+            if current_aspect > self.target_aspect_ratio:
+                # Too wide - expand height
+                new_height = current_width / self.target_aspect_ratio
+                self.y_min = center_y - new_height / 2
+                self.y_max = center_y + new_height / 2
+            else:
+                # Too tall - expand width
+                new_width = current_height * self.target_aspect_ratio
+                self.x_min = center_x - new_width / 2
+                self.x_max = center_x + new_width / 2
     
     def draw(self):
         """Draw the complete field"""
@@ -996,7 +1017,8 @@ def render(
     output_path: str,
     figsize: tuple = (8, 12),
     dpi: int = 100,
-    padding: float = None
+    padding: float = None,
+    target_aspect_ratio: float = None
 ) -> str:
     """Render a drill to an SVG file"""
     fig, ax = plt.subplots(figsize=figsize)
@@ -1009,7 +1031,7 @@ def render(
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
     
     # Draw field
-    field_renderer = FieldRenderer(ax, drill, padding=padding)  # CHANGE THIS LINE
+    field_renderer = FieldRenderer(ax, drill, padding=padding, target_aspect_ratio=target_aspect_ratio)
     field_renderer.draw()
     
     # Draw entities
