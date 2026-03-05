@@ -379,6 +379,9 @@ class FieldRenderer:
         six_y = goal_y + into * 6
         pen_spot_y = goal_y + into * 12
         
+        # Goal line / end line
+        self.ax.plot([30, 70], [goal_y, goal_y], color=LINE_COLOR, lw=1.5, zorder=1)
+        
         # 18-yard box
         self.ax.plot([30, 70], [pen_y, pen_y], color=LINE_COLOR, lw=1.5, zorder=1)
         self.ax.plot([30, 30], [pen_y, goal_y], color=LINE_COLOR, lw=1.5, zorder=1)
@@ -446,17 +449,17 @@ class EntityRenderer:
         
         self.ax.scatter(
             player.position.x, player.position.y,
-            s=150, c=color, edgecolors="white",
-            linewidths=1.5, zorder=10
+            s=200, c=color, edgecolors="white",
+            linewidths=2.0, zorder=10
         )
         
         self.ax.annotate(
             player.id,
             (player.position.x, player.position.y),
             textcoords="offset points",
-            xytext=(0, -16),
+            xytext=(0, -18),
             ha='center',
-            fontsize=7,
+            fontsize=9,
             fontweight='bold',
             color='white',
             zorder=11
@@ -465,9 +468,9 @@ class EntityRenderer:
     def draw_cone(self, x: float, y: float):
         """Draw a cone marker"""
         self.ax.scatter(
-            x, y, s=80, marker="^",
+            x, y, s=100, marker="^",
             c=CONE_COLOR, edgecolors="black",
-            linewidths=0.8, zorder=4
+            linewidths=1.0, zorder=4
         )
     
     def draw_cone_line(self, cone_line: ConeLine, cones: list):
@@ -479,21 +482,21 @@ class EntityRenderer:
             [from_cone.position.x, to_cone.position.x],
             [from_cone.position.y, to_cone.position.y],
             color=CONE_LINE_COLOR,
-            linewidth=2.0,
+            linewidth=3.0,
             linestyle='-',
             alpha=0.8,
-            zorder=3  # Below cones but above grass
+            zorder=3
         )
     
     def draw_ball(self, x: float, y: float):
         """Draw a soccer ball"""
         self.ax.scatter(
-            x, y, s=120, c="white",
-            edgecolors="black", linewidths=1.5,
+            x, y, s=150, c="white",
+            edgecolors="black", linewidths=2.0,
             zorder=12
         )
         self.ax.scatter(
-            x, y, s=35, c="black",
+            x, y, s=40, c="black",
             marker='p',
             zorder=13
         )
@@ -551,7 +554,7 @@ class EntityRenderer:
         
         width = 4  # Mini goal width
         depth = 2  # Mini goal depth
-        post_width = 2.0
+        post_width = 3.0
         
         # Use white for mini goals (same as full-size goals)
         frame_color = GOAL_COLOR  # white
@@ -714,9 +717,9 @@ class EntityRenderer:
 class ActionRenderer:
     """Renders movement arrows"""
     
-    LINE_WIDTH = 1.8
-    ARROW_HEAD_WIDTH = 1.2
-    ARROW_HEAD_LENGTH = 1.0
+    LINE_WIDTH = 2.0
+    ARROW_HEAD_WIDTH = 1.5
+    ARROW_HEAD_LENGTH = 1.2
     PLAYER_OFFSET = 2.5
     ACTION_GAP = 0.8
     
